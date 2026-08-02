@@ -1,7 +1,7 @@
 "use client";
 
 import type { Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AuthGuard } from "@/components/AuthGuard";
 import { apiFetch } from "@/lib/clientApi";
@@ -62,18 +62,26 @@ type GeneratedCode = {
   label: string;
 };
 
+type RecordRow = {
+  cells: string[];
+  action?: React.ReactNode;
+};
+
 const t = {
   title: "\u7ba1\u7406\u5f8c\u53f0",
   subtitle: "\u7ba1\u7406\u6703\u54e1\u555f\u7528\u3001\u9080\u8acb\u78bc\u8207\u4f7f\u7528\u7d00\u9304\u3002",
   loading: "\u8f09\u5165\u5f8c\u53f0\u8cc7\u6599\u4e2d...",
   users: "\u6703\u54e1\u7ba1\u7406",
   inviteCodes: "\u9080\u8acb\u78bc\u7ba1\u7406",
+  inviteDesc: "\u9080\u8acb\u78bc\u9810\u8a2d\u53ea\u80fd\u4f7f\u7528\u4e00\u6b21\uff0c\u9069\u5408\u5206\u767c\u7d66\u5c11\u91cf\u540c\u4e8b\u6e2c\u8a66\u3002",
   generatedCodes: "\u65b0\u7522\u751f\u7684\u9080\u8acb\u78bc",
-  generatedHint:
-    "\u9080\u8acb\u78bc\u660e\u78bc\u53ea\u6703\u5728\u9019\u88e1\u986f\u793a\u4e00\u6b21\uff0c\u8acb\u7acb\u5373\u8a18\u9304\u6216\u5206\u767c\u7d66\u4f7f\u7528\u8005\u3002",
+  generatedHint: "\u9080\u8acb\u78bc\u660e\u78bc\u53ea\u6703\u5728\u9019\u88e1\u986f\u793a\u4e00\u6b21\uff0c\u8acb\u7acb\u5373\u8a18\u9304\u6216\u5206\u767c\u7d66\u4f7f\u7528\u8005\u3002",
   lawRecords: "\u6c11\u6cd5\u6279\u6539\u7d00\u9304",
   englishRecords: "\u82f1\u6587\u7df4\u7fd2\u7d00\u9304",
   usageRecords: "AI \u4f7f\u7528\u7d00\u9304",
+  userSummary: "\u4f7f\u7528\u8005\u6458\u8981",
+  filterAll: "\u5168\u90e8\u4f7f\u7528\u8005",
+  filterLabel: "\u7be9\u9078\u4f7f\u7528\u8005",
   empty: "\u76ee\u524d\u6c92\u6709\u8cc7\u6599",
   correct: "\u7b54\u5c0d",
   wrong: "\u7b54\u932f",
@@ -87,6 +95,27 @@ const t = {
   enableCode: "\u555f\u7528",
   disableCode: "\u505c\u7528",
   saved: "\u5df2\u66f4\u65b0",
+  deleteRecord: "\u522a\u9664",
+  deleteConfirm: "\u78ba\u5b9a\u8981\u522a\u9664\u9019\u7b46\u7d00\u9304\u55ce\uff1f\u6b64\u64cd\u4f5c\u7121\u6cd5\u5fa9\u539f\u3002",
+  unknownUser: "\u672a\u77e5\u4f7f\u7528\u8005",
+  displayName: "\u986f\u793a\u540d\u7a31",
+  createdAt: "\u5efa\u7acb\u6642\u9593",
+  registeredAt: "\u8a3b\u518a\u6642\u9593",
+  action: "\u64cd\u4f5c",
+  status: "\u72c0\u614b",
+  usageCount: "\u4f7f\u7528\u6b21\u6578",
+  user: "\u4f7f\u7528\u8005",
+  score: "\u5206\u6578",
+  question: "\u984c\u76ee",
+  time: "\u6642\u9593",
+  type: "\u984c\u578b",
+  result: "\u7d50\u679c",
+  event: "\u52d5\u4f5c",
+  lawCount: "\u6c11\u6cd5\u6b21\u6578",
+  englishCount: "\u82f1\u6587\u6b21\u6578",
+  aiCount: "AI \u6b21\u6578",
+  count: "\u6578\u91cf",
+  label: "\u6a19\u7c64",
 };
 
 export default function AdminPage() {
@@ -110,6 +139,7 @@ function Admin({ session }: { session: Session }) {
   const [inviteLabel, setInviteLabel] = useState("coworker");
   const [generatedCodes, setGeneratedCodes] = useState<GeneratedCode[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState("all");
 
   async function reload() {
     setError("");
@@ -178,8 +208,54 @@ function Admin({ session }: { session: Session }) {
     }
   }
 
+  async function deleteRecord(type: "law" | "english" | "usage", id: string) {
+    if (!window.confirm(t.deleteConfirm)) return;
+    const busyKey = `${type}:${id}`;
+    setBusyId(busyKey);
+    setError("");
+    setMessage("");
+    try {
+      await apiFetch<{ ok: boolean }>(session, "/api/admin/records", {
+        method: "DELETE",
+        body: JSON.stringify({ type, id }),
+      });
+      setMessage(t.saved);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  const filtered = useMemo(() => {
+    if (!data || selectedUserId === "all") return data;
+    return {
+      ...data,
+      law: data.law.filter((item) => item.user_id === selectedUserId),
+      english: data.english.filter((item) => item.user_id === selectedUserId),
+      usage: data.usage.filter((item) => item.user_id === selectedUserId),
+    };
+  }, [data, selectedUserId]);
+
+  const summaries = useMemo(() => {
+    if (!data) return [];
+    return data.users.map((user) => ({
+      user,
+      lawCount: data.law.filter((item) => item.user_id === user.id).length,
+      englishCount: data.english.filter((item) => item.user_id === user.id).length,
+      usageCount: data.usage.filter((item) => item.user_id === user.id).length,
+    }));
+  }, [data]);
+
   if (error && !data) return <div className="panel text-red-600">{error}</div>;
-  if (!data) return <div className="panel">{t.loading}</div>;
+  if (!data || !filtered) return <div className="panel">{t.loading}</div>;
+
+  function userLabel(userId: string) {
+    const user = data?.users.find((item) => item.id === userId);
+    if (!user) return `${t.unknownUser} (${userId.slice(0, 8)})`;
+    return `${user.email}${user.display_name ? ` / ${user.display_name}` : ""}`;
+  }
 
   return (
     <div className="space-y-5">
@@ -191,21 +267,45 @@ function Admin({ session }: { session: Session }) {
       </section>
 
       <section className="panel">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-slate-950">{t.userSummary}</h2>
+            <p className="mt-1 text-sm text-slate-500">{t.filterLabel}</p>
+          </div>
+          <select className="field max-w-sm" value={selectedUserId} onChange={(event) => setSelectedUserId(event.target.value)}>
+            <option value="all">{t.filterAll}</option>
+            {data.users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.email}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <StatCard label={t.lawCount} value={filtered.law.length} />
+          <StatCard label={t.englishCount} value={filtered.english.length} />
+          <StatCard label={t.aiCount} value={filtered.usage.length} />
+        </div>
+      </section>
+
+      <section className="panel">
         <h2 className="font-semibold text-slate-950">{t.users}</h2>
         <div className="mt-4 overflow-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-2 py-2">Email</th>
-                <th className="px-2 py-2">\u986f\u793a\u540d\u7a31</th>
+                <th className="px-2 py-2">{t.displayName}</th>
                 <th className="px-2 py-2">Role</th>
                 <th className="px-2 py-2">Plan</th>
-                <th className="px-2 py-2">\u8a3b\u518a\u6642\u9593</th>
-                <th className="px-2 py-2">\u64cd\u4f5c</th>
+                <th className="px-2 py-2">{t.lawCount}</th>
+                <th className="px-2 py-2">{t.englishCount}</th>
+                <th className="px-2 py-2">{t.registeredAt}</th>
+                <th className="px-2 py-2">{t.action}</th>
               </tr>
             </thead>
             <tbody>
-              {data.users.map((user) => (
+              {summaries.map(({ user, lawCount, englishCount }) => (
                 <tr className="border-t border-slate-200" key={user.id}>
                   <td className="px-2 py-3 text-slate-800">{user.email}</td>
                   <td className="px-2 py-3 text-slate-700">{user.display_name ?? "-"}</td>
@@ -215,6 +315,8 @@ function Admin({ session }: { session: Session }) {
                   <td className="px-2 py-3">
                     <StatusBadge tone={user.plan === "member" ? "green" : "slate"}>{user.plan}</StatusBadge>
                   </td>
+                  <td className="px-2 py-3 text-slate-700">{lawCount}</td>
+                  <td className="px-2 py-3 text-slate-700">{englishCount}</td>
                   <td className="px-2 py-3 text-slate-600">{formatDate(user.created_at)}</td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -243,21 +345,19 @@ function Admin({ session }: { session: Session }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="font-semibold text-slate-950">{t.inviteCodes}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              \u9080\u8acb\u78bc\u9810\u8a2d\u53ea\u80fd\u4f7f\u7528\u4e00\u6b21\uff0c\u9069\u5408\u5206\u767c\u7d66\u5c11\u91cf\u540c\u4e8b\u6e2c\u8a66\u3002
-            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{t.inviteDesc}</p>
           </div>
           <form className="grid gap-2 sm:grid-cols-[90px_160px_auto]" onSubmit={generateInviteCodes}>
             <input
+              aria-label={t.count}
               className="field"
               max={50}
               min={1}
               type="number"
               value={inviteCount}
               onChange={(event) => setInviteCount(Number(event.target.value))}
-              aria-label="\u6578\u91cf"
             />
-            <input className="field" value={inviteLabel} onChange={(event) => setInviteLabel(event.target.value)} aria-label="\u6a19\u7c64" />
+            <input aria-label={t.label} className="field" value={inviteLabel} onChange={(event) => setInviteLabel(event.target.value)} />
             <button className="btn-primary" disabled={generating} type="submit">
               {generating ? t.generating : t.generate}
             </button>
@@ -283,10 +383,10 @@ function Admin({ session }: { session: Session }) {
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-2 py-2">Label</th>
-                <th className="px-2 py-2">\u72c0\u614b</th>
-                <th className="px-2 py-2">\u4f7f\u7528\u6b21\u6578</th>
-                <th className="px-2 py-2">\u5efa\u7acb\u6642\u9593</th>
-                <th className="px-2 py-2">\u64cd\u4f5c</th>
+                <th className="px-2 py-2">{t.status}</th>
+                <th className="px-2 py-2">{t.usageCount}</th>
+                <th className="px-2 py-2">{t.createdAt}</th>
+                <th className="px-2 py-2">{t.action}</th>
               </tr>
             </thead>
             <tbody>
@@ -322,42 +422,90 @@ function Admin({ session }: { session: Session }) {
 
       <RecordTable
         title={t.lawRecords}
-        rows={data.law.map((item) => [item.user_id, `${item.score ?? "-"} / 100`, item.question.slice(0, 80), formatDate(item.created_at)])}
+        headers={[t.user, t.score, t.question, t.time, t.action]}
+        rows={filtered.law.map((item) => ({
+          cells: [userLabel(item.user_id), `${item.score ?? "-"} / 100`, item.question.slice(0, 80), formatDate(item.created_at)],
+          action: (
+            <SmallButton disabled={busyId === `law:${item.id}`} onClick={() => deleteRecord("law", item.id)}>
+              {t.deleteRecord}
+            </SmallButton>
+          ),
+        }))}
       />
       <RecordTable
         title={t.englishRecords}
-        rows={data.english.map((item) => [
-          item.user_id,
-          `${item.level}/${item.question_type}`,
-          item.is_correct === null ? t.notSubmitted : item.is_correct ? t.correct : t.wrong,
-          formatDate(item.created_at),
-        ])}
+        headers={[t.user, t.type, t.result, t.time, t.action]}
+        rows={filtered.english.map((item) => ({
+          cells: [
+            userLabel(item.user_id),
+            `${item.level}/${item.question_type}`,
+            item.is_correct === null ? t.notSubmitted : item.is_correct ? t.correct : t.wrong,
+            formatDate(item.created_at),
+          ],
+          action: (
+            <SmallButton disabled={busyId === `english:${item.id}`} onClick={() => deleteRecord("english", item.id)}>
+              {t.deleteRecord}
+            </SmallButton>
+          ),
+        }))}
       />
-      <RecordTable title={t.usageRecords} rows={data.usage.map((item) => [item.user_id, item.action_type, formatDate(item.created_at)])} />
+      <RecordTable
+        title={t.usageRecords}
+        headers={[t.user, t.event, t.time, t.action]}
+        rows={filtered.usage.map((item) => ({
+          cells: [userLabel(item.user_id), item.action_type, formatDate(item.created_at)],
+          action: (
+            <SmallButton disabled={busyId === `usage:${item.id}`} onClick={() => deleteRecord("usage", item.id)}>
+              {t.deleteRecord}
+            </SmallButton>
+          ),
+        }))}
+      />
     </div>
   );
 }
 
-function RecordTable({ title, rows }: { title: string; rows: string[][] }) {
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
+      <p className="text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function RecordTable({ title, headers, rows }: { title: string; headers: string[]; rows: RecordRow[] }) {
   return (
     <section className="panel">
       <h2 className="font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 overflow-auto">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="bg-slate-50 text-slate-500">
+            <tr>
+              {headers.map((header) => (
+                <th className="px-2 py-2" key={`${title}-${header}`}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {rows.length ? (
               rows.map((row, index) => (
                 <tr className="border-t border-slate-200" key={`${title}-${index}`}>
-                  {row.map((cell, cellIndex) => (
+                  {row.cells.map((cell, cellIndex) => (
                     <td className="px-2 py-3 text-slate-700" key={`${title}-${index}-${cellIndex}`}>
                       {cell}
                     </td>
                   ))}
+                  {row.action ? <td className="px-2 py-3">{row.action}</td> : null}
                 </tr>
               ))
             ) : (
               <tr>
-                <td className="py-3 text-slate-500">{t.empty}</td>
+                <td className="py-3 text-slate-500" colSpan={headers.length}>
+                  {t.empty}
+                </td>
               </tr>
             )}
           </tbody>

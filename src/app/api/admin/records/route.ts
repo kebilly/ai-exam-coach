@@ -3,6 +3,12 @@ import { getAuthedUser, getUserRole } from "@/lib/api/auth";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { assertServerEnv } from "@/lib/env";
 
+const deletableTables = {
+  law: "law_submissions",
+  english: "english_exercises",
+  usage: "usage_logs",
+} as const;
+
 export async function GET(request: Request) {
   try {
     assertServerEnv();
@@ -43,5 +49,35 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Admin failed" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    assertServerEnv();
+    const { user, error } = await getAuthedUser(request);
+    if (error) return error;
+
+    const role = await getUserRole(user.id);
+    if (role !== "admin") {
+      return NextResponse.json({ error: "Admin only" }, { status: 403 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const recordType = String(body.type ?? "") as keyof typeof deletableTables;
+    const id = String(body.id ?? "").trim();
+    const table = deletableTables[recordType];
+
+    if (!table || !id) {
+      return NextResponse.json({ error: "Invalid delete target" }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdmin();
+    const { error: deleteError } = await supabase.from(table).delete().eq("id", id);
+    if (deleteError) throw deleteError;
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Admin delete failed" }, { status: 500 });
   }
 }
