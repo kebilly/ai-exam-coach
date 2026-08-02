@@ -16,7 +16,7 @@ export function AuthGuard({ children }: { children: (session: Session) => React.
     let alive = true;
     const timeout = window.setTimeout(() => {
       if (!alive) return;
-      setError("登入狀態讀取逾時，請重新登入。");
+      setError("登入檢查逾時，請重新整理頁面或重新登入。");
       setLoading(false);
     }, 8000);
 
@@ -36,7 +36,7 @@ export function AuthGuard({ children }: { children: (session: Session) => React.
       .catch(() => {
         if (!alive) return;
         window.clearTimeout(timeout);
-        setError("無法讀取登入狀態，請重新登入。");
+        setError("讀取登入狀態失敗，請重新登入。");
         setLoading(false);
       });
 
@@ -55,7 +55,7 @@ export function AuthGuard({ children }: { children: (session: Session) => React.
       <div className="panel space-y-3">
         <p className="text-sm text-red-600">{error}</p>
         <Link className="btn-primary inline-flex" href="/login">
-          前往登入
+          重新登入
         </Link>
       </div>
     );

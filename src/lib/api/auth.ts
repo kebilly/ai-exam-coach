@@ -13,6 +13,16 @@ export async function getAuthedUser(request: Request) {
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
+    const message = error?.message ?? "";
+    if (message.includes("fetch failed") || message.includes("certificate") || message.includes("network")) {
+      return {
+        user: null,
+        error: NextResponse.json(
+          { error: "Auth service unavailable. Please check local HTTPS certificate settings and restart the dev server." },
+          { status: 503 },
+        ),
+      };
+    }
     return { user: null, error: NextResponse.json({ error: "Invalid session" }, { status: 401 }) };
   }
 
@@ -30,22 +40,14 @@ export async function ensureProfile(user: { id: string; email?: string | null },
 
 export async function getUserRole(userId: string) {
   const supabase = createSupabaseAdmin();
-  const { data } = await supabase
-    .from("user_profiles")
-    .select("role")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data } = await supabase.from("user_profiles").select("role").eq("id", userId).maybeSingle();
 
   return data?.role ?? "user";
 }
 
 export async function getUserProfile(userId: string) {
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("user_profiles")
-    .select("id, email, display_name, role, plan")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.from("user_profiles").select("id, email, display_name, role, plan").eq("id", userId).maybeSingle();
 
   if (error) throw error;
   return data;
@@ -55,5 +57,5 @@ export async function assertMemberUnlocked(userId: string) {
   const profile = await getUserProfile(userId);
   if (profile?.role === "admin" || profile?.plan === "member") return profile;
 
-  throw new Error("帳號尚未啟用正式會員。請先在 Dashboard 輸入解鎖碼，或請管理者協助開通。");
+  throw new Error("帳號尚未啟用正式會員。請先在 Dashboard 輸入邀請碼，或請管理者協助開通。");
 }

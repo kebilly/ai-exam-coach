@@ -22,3 +22,8 @@ create table if not exists public.member_invite_codes (
 );
 
 alter table public.member_invite_codes enable row level security;
+
+-- Invite codes must never be readable or writable from browser clients.
+-- Server routes use the service_role key to generate, toggle, and redeem codes.
+revoke all on table public.member_invite_codes from anon, authenticated;
+grant select, insert, update on table public.member_invite_codes to service_role;
