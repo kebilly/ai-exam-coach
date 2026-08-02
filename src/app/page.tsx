@@ -12,40 +12,67 @@ import {
   TimerReset,
 } from "lucide-react";
 
+const text = {
+  brandSub: "\u90f5\u5c40\u5167\u5347\u8003\u8a66\u7df4\u7fd2\u5e73\u53f0",
+  login: "\u767b\u5165",
+  register: "\u8a3b\u518a\u5e33\u865f",
+  badge: "\u5167\u90e8\u8a66\u7528\u7248\uff1a\u767b\u5165\u5f8c\u7531\u7ba1\u7406\u8005\u555f\u7528",
+  heroTitle: "\u90f5\u5c40\u5167\u5347\u8003\u8a66\u7684 AI \u7df4\u7fd2\u6559\u7df4",
+  heroDesc:
+    "\u6574\u5408\u6c11\u6cd5\u7533\u8ad6\u6279\u6539\u8207\u82f1\u6587\u984c\u76ee\u7df4\u7fd2\uff0c\u5e6b\u52a9\u8003\u751f\u7528\u66f4\u6709\u7d50\u69cb\u7684\u65b9\u5f0f\u7df4\u7fd2\u3001\u6aa2\u8996\u5f31\u9ede\uff0c\u4e26\u7d2f\u7a4d\u81ea\u5df1\u7684\u5b78\u7fd2\u7d00\u9304\u3002",
+  lawDemo: "\u8a66\u7528\u6c11\u6cd5\u6279\u6539",
+  englishDemo: "\u8a66\u7528\u82f1\u6587\u7df4\u7fd2",
+  lawLimit: "\u6c11\u6cd5\u7df4\u7fd2",
+  englishLimit: "\u82f1\u6587\u7df4\u7fd2",
+  controlledUse: "\u4f7f\u7528\u6b0a\u9650",
+  moduleEyebrow: "Practice Modules",
+  moduleTitle: "\u76ee\u524d\u53ef\u7528\u7df4\u7fd2\u6a21\u7d44",
+  moduleDesc: "\u6b63\u5f0f\u7df4\u7fd2\u9700\u767b\u5165\u4e26\u7531\u7ba1\u7406\u8005\u555f\u7528\uff1b\u8a66\u7528\u9801\u9762\u53ef\u7528\u65bc\u5feb\u901f\u6aa2\u8996\u529f\u80fd\u6548\u679c\u3002",
+  controlTitle: "\u5e33\u865f\u8207\u4f7f\u7528\u6b0a\u9650",
+  controlDesc: "\u5e33\u865f\u8a3b\u518a\u5f8c\u4e0d\u6703\u81ea\u52d5\u555f\u7528\u6b63\u5f0f\u7df4\u7fd2\u3002\u7ba1\u7406\u8005\u53ef\u5728\u5f8c\u53f0\u958b\u901a\u6703\u54e1\u3001\u767c\u653e\u4e00\u6b21\u6027\u9080\u8acb\u78bc\uff0c\u4e26\u6aa2\u8996\u4f7f\u7528\u7d00\u9304\u3002",
+  adminControl: "\u7ba1\u7406\u8005\u53ef\u63a7\u5236\u8ab0\u80fd\u6b63\u5f0f\u4f7f\u7528",
+  adminControlDesc:
+    "\u9019\u500b\u7248\u672c\u9069\u5408\u5148\u7d66\u5c11\u91cf\u540c\u4e8b\u8a66\u7528\uff0c\u900f\u904e\u5f8c\u53f0\u555f\u7528\u3001\u9080\u8acb\u78bc\u8207\u6bcf\u65e5\u6b21\u6578\u9650\u5236\uff0c\u78ba\u4fdd\u4f7f\u7528\u7bc4\u570d\u53ef\u63a7\uff0c\u4e26\u6301\u7e8c\u6821\u6e96\u6279\u6539\u54c1\u8cea\u8207\u984c\u76ee\u65b9\u5411\u3002",
+  workflowEyebrow: "Workflow",
+  workflowTitle: "\u5efa\u8b70\u7df4\u7fd2\u6d41\u7a0b",
+  footer: "AI Exam Coach Beta - Postal promotion practice MVP.",
+  footerDesc: "\u4f7f\u7528 seed \u984c\u5eab\u8207\u6b0a\u9650\u63a7\u7ba1\uff0c\u964d\u4f4e\u8aa4\u7528 API \u8207 token \u6d88\u8017\u98a8\u96aa\u3002",
+};
+
 const practiceEntries = [
   {
-    title: "民法申論批改",
-    description: "針對爭點、請求權基礎、法條理解、三段論與具體涵攝提供批改回饋，適合考前反覆練習手感。",
-    meta: "每日正式練習 3 次",
+    title: "\u6c11\u6cd5\u7533\u8ad6 AI \u6279\u6539",
+    description: "\u8f38\u5165\u6c11\u6cd5\u7533\u8ad6\u7b54\u6848\u5f8c\uff0c\u7cfb\u7d71\u6703\u4f9d\u722d\u9ede\u3001\u6cd5\u689d\u3001\u6db5\u651d\u8207\u7d50\u8ad6\u7d66\u4e88\u56de\u994b\u3002",
+    meta: "\u6bcf\u65e5\u6700\u591a 2 \u6b21",
     icon: ClipboardCheck,
     href: "/demo/law",
-    action: "開始民法練習",
-    accent: "emerald",
+    action: "\u958b\u59cb\u6c11\u6cd5\u7df4\u7fd2",
+    accent: "sky",
   },
   {
-    title: "郵局英文題目練習",
-    description: "以郵局內升考試題型為基礎，練習單字、對話、閱讀與翻譯，解析改用中文方便快速訂正。",
-    meta: "每日正式練習 5 次",
+    title: "\u82f1\u6587\u7d9c\u5408\u984c\u76ee\u7df4\u7fd2",
+    description: "\u4f9d\u90f5\u5c40\u5167\u5347\u8003\u8a66\u984c\u578b\u8a2d\u8a08\uff0c\u63d0\u4f9b\u55ae\u5b57\u3001\u6587\u6cd5\u3001\u95b1\u8b80\u8207\u89e3\u6790\u7df4\u7fd2\u3002",
+    meta: "\u6bcf\u65e5\u6700\u591a 1 \u4efd\u8003\u5377",
     icon: BookOpenCheck,
     href: "/demo/english",
-    action: "開始英文練習",
+    action: "\u958b\u59cb\u82f1\u6587\u7df4\u7fd2",
     accent: "indigo",
   },
 ];
 
 const workflow = [
-  { title: "選擇科目", text: "先選民法申論或英文題型，不需要設定複雜參數。" },
-  { title: "完成作答", text: "民法輸入申論答案，英文依題型作答或翻譯。" },
-  { title: "取得回饋", text: "系統整理分數、弱點、缺漏與下次練習方向。" },
+  { title: "\u9078\u64c7\u984c\u578b", text: "\u5148\u9078\u6c11\u6cd5\u6216\u82f1\u6587\u7df4\u7fd2\uff0c\u4f9d\u7cfb\u7d71\u984c\u76ee\u9032\u884c\u4f5c\u7b54\u3002" },
+  { title: "\u53d6\u5f97\u56de\u994b", text: "\u6c11\u6cd5\u6703\u56de\u994b\u5206\u6578\u3001\u722d\u9ede\u3001\u6db5\u651d\u8207\u4fee\u6b63\u65b9\u5411\uff1b\u82f1\u6587\u63d0\u4f9b\u7b54\u6848\u8207\u4e2d\u6587\u89e3\u6790\u3002" },
+  { title: "\u8ffd\u8e64\u5f31\u9ede", text: "\u767b\u5165\u5f8c\u53ef\u4fdd\u7559\u7df4\u7fd2\u7d00\u9304\uff0c\u4fbf\u65bc\u5f8c\u7e8c\u6aa2\u8996\u5206\u6578\u8207\u5b78\u7fd2\u72c0\u614b\u3002" },
 ];
 
 const safeguards = [
-  "未解鎖帳號不得呼叫正式 API，避免試用期間 token 被誤用。",
-  "每日練習次數由後端控管，避免只靠前端限制被繞過。",
-  "英文先採 seed 題庫與小幅變形，降低成本，也保留考古題風格。",
+  "\u672a\u555f\u7528\u5e33\u865f\u4e0d\u80fd\u547c\u53eb AI API\uff0c\u907f\u514d\u8aa4\u7528\u8207\u984d\u5916\u6210\u672c\u3002",
+  "\u6c11\u6cd5\u8207\u82f1\u6587\u5747\u6709\u6bcf\u65e5\u6b21\u6578\u9650\u5236\uff0c\u9069\u5408\u5c0f\u7bc4\u570d\u7a69\u5b9a\u8a66\u7528\u3002",
+  "\u5f8c\u53f0\u53ef\u67e5\u770b\u4f7f\u7528\u8005\u7d00\u9304\u3001\u555f\u7528\u6703\u54e1\u8207\u505c\u7528\u9080\u8acb\u78bc\u3002",
 ];
 
-const statusItems = ["民法申論批改 MVP", "郵局英文題庫", "解鎖碼內測"];
+const statusItems = ["\u6c11\u6cd5\u6279\u6539 MVP", "\u82f1\u6587\u984c\u76ee\u7df4\u7fd2", "\u5f8c\u53f0\u6b0a\u9650\u63a7\u7ba1"];
 
 export default function HomePage() {
   return (
@@ -58,16 +85,16 @@ export default function HomePage() {
             </div>
             <div>
               <p className="text-sm font-bold text-slate-950">AI Exam Coach</p>
-              <p className="text-xs text-slate-500">郵局內升考試練習平台</p>
+              <p className="text-xs text-slate-500">{text.brandSub}</p>
             </div>
           </Link>
 
           <div className="flex items-center gap-2">
             <Link className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50" href="/login">
-              登入
+              {text.login}
             </Link>
             <Link className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" href="/register">
-              建立帳號
+              {text.register}
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -80,7 +107,7 @@ export default function HomePage() {
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
                 <ShieldCheck size={14} />
-                內測版本：給同事考前練習使用
+                {text.badge}
               </div>
               {statusItems.map((item) => (
                 <span className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500" key={item}>
@@ -89,28 +116,23 @@ export default function HomePage() {
               ))}
             </div>
 
-            <h1 className="max-w-4xl text-4xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">
-              郵局內升考試的 AI 練習教練
-            </h1>
-
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
-              先聚焦民法申論與英文題目練習，讓考生可以在短時間內反覆作答、取得具體回饋，知道下一次該補強哪一段，而不是只看到一個分數。
-            </p>
+            <h1 className="max-w-4xl text-4xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">{text.heroTitle}</h1>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">{text.heroDesc}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" href="/demo/law">
-                試用民法批改
+                {text.lawDemo}
                 <ArrowRight size={16} />
               </Link>
               <Link className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50" href="/demo/english">
-                試用英文出題
+                {text.englishDemo}
               </Link>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <Metric label="民法練習" value="3 次 / 日" />
-              <Metric label="英文練習" value="5 次 / 日" />
-              <Metric label="內測規模" value="約 10 人" />
+              <Metric label={text.lawLimit} value="2 / day" />
+              <Metric label={text.englishLimit} value="1 paper / day" />
+              <Metric label={text.controlledUse} value="Admin unlock" />
             </div>
           </div>
 
@@ -120,8 +142,8 @@ export default function HomePage() {
                 <LockKeyhole size={21} />
               </div>
               <div>
-                <h2 className="font-semibold text-slate-950">正式會員採解鎖碼啟用</h2>
-                <p className="text-sm text-slate-500">註冊後先建立帳號，由管理者提供解鎖碼才開放正式練習。</p>
+                <h2 className="font-semibold text-slate-950">{text.controlTitle}</h2>
+                <p className="text-sm text-slate-500">{text.controlDesc}</p>
               </div>
             </div>
 
@@ -137,9 +159,9 @@ export default function HomePage() {
             <div className="mt-5 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
               <div className="mb-1 flex items-center gap-2 font-semibold">
                 <KeyRound size={16} />
-                管理者可控制誰能正式使用
+                {text.adminControl}
               </div>
-              這個版本適合先給小規模同事試用，等確認批改品質與題目方向穩定後，再擴充完整會員制與付費方案。
+              {text.adminControlDesc}
             </div>
           </div>
         </div>
@@ -148,21 +170,17 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Practice Modules</p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-950">選一科，直接開始練習</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{text.moduleEyebrow}</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-950">{text.moduleTitle}</h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-slate-600">首頁不堆功能說明，讓考生一眼看懂目前能做什麼，也讓作品集展示更像一個可用產品。</p>
+          <p className="max-w-xl text-sm leading-6 text-slate-600">{text.moduleDesc}</p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           {practiceEntries.map((entry) => {
-            const isLaw = entry.accent === "emerald";
+            const isLaw = entry.accent === "sky";
             return (
-              <Link
-                className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                href={entry.href}
-                key={entry.title}
-              >
+              <Link className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href={entry.href} key={entry.title}>
                 <div className="flex items-start justify-between gap-4">
                   <div className={`grid size-12 place-items-center rounded-lg ${isLaw ? "bg-sky-50 text-sky-700" : "bg-indigo-50 text-indigo-700"}`}>
                     <entry.icon size={22} />
@@ -194,17 +212,15 @@ export default function HomePage() {
               <FileText size={20} />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workflow</p>
-              <h2 className="text-2xl font-bold text-slate-950">考生使用流程</h2>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{text.workflowEyebrow}</p>
+              <h2 className="text-2xl font-bold text-slate-950">{text.workflowTitle}</h2>
             </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
             {workflow.map((item, index) => (
               <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-4" key={item.title}>
-                <div className="mb-3 inline-flex size-8 items-center justify-center rounded-md bg-sky-600 text-sm font-bold text-white">
-                  {index + 1}
-                </div>
+                <div className="mb-3 inline-flex size-8 items-center justify-center rounded-md bg-sky-600 text-sm font-bold text-white">{index + 1}</div>
                 <h3 className="font-semibold text-slate-950">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
               </div>
@@ -215,10 +231,10 @@ export default function HomePage() {
 
       <footer className="bg-slate-900 text-slate-300">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p>AI Exam Coach Beta - Postal promotion practice MVP.</p>
+          <p>{text.footer}</p>
           <div className="flex items-center gap-2 text-slate-300">
             <TimerReset size={15} />
-            先用 seed 題庫降低 token 成本，再逐步導入 AI 變形題。
+            {text.footerDesc}
           </div>
         </div>
       </footer>
