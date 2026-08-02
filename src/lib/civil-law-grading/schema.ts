@@ -107,6 +107,7 @@ export const civilLawGradingResultSchema = z.object({
     }),
   ),
   grading_diagnostics: z.object({
+    rubric_id: z.string().optional(),
     subsumption_coverage_average: z.number().min(0).max(1),
     advanced_depth_score: z.number().min(0),
     calibration_flags: z.array(z.string()).default([]),

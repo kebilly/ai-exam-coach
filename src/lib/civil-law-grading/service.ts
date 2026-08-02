@@ -21,6 +21,18 @@ type GradeInput = {
   rubricId?: string;
 };
 
+export function isVerifiedCivilLawRubricId(rubricId?: string) {
+  return [
+    "civil_law_article_88_error_revocation",
+    "civil_law_unjust_enrichment_179",
+    "civil_law_sale_defect",
+    "civil_law_transfer_good_faith",
+    "civil_law_tort_credit_reputation",
+    "civil_law_tort_184",
+    "civil_law_inheritance_basic",
+  ].includes(rubricId?.trim() ?? "");
+}
+
 type ElementSpec = {
   element: string;
   importance: "high" | "medium" | "low";
@@ -147,6 +159,7 @@ export async function gradeCivilLawEssay(input: GradeInput): Promise<CivilLawGra
     },
     deductions,
     grading_diagnostics: {
+      rubric_id: rubric.rubricId,
       subsumption_coverage_average: context.averageCoverage,
       advanced_depth_score: context.advancedDepthScore,
       calibration_flags: context.flags,
@@ -169,6 +182,13 @@ export async function gradeCivilLawEssay(input: GradeInput): Promise<CivilLawGra
 
 function buildQuestionRubric(question: string, rubricId?: string): Rubric {
   const normalizedRubricId = rubricId?.trim();
+  if (
+    normalizedRubricId === "civil_law_inheritance_basic" ||
+    (!normalizedRubricId && /繼承|應繼分|特留分|遺產|被繼承人|繼承人|配偶|子女|父母|兄弟姊妹/.test(question))
+  ) {
+    return buildInheritanceBasicRubric(question);
+  }
+
   if (
     normalizedRubricId === "civil_law_article_88_error_revocation" ||
     (!normalizedRubricId && /88|錯誤|誤認|撤銷意思表示|撤銷.*意思表示|意思表示.*撤銷|重大誤認|動機錯誤|物之性質/.test(question))
@@ -198,6 +218,13 @@ function buildQuestionRubric(question: string, rubricId?: string): Rubric {
         element("撤銷法律效果", "medium", [/撤銷|自始無效|民法第?\s*91\s*條|91條|信賴利益|損害賠償/], [/契約|乙|信賴|高價購買/]),
       ],
     };
+  }
+
+  if (
+    normalizedRubricId === "civil_law_transfer_good_faith" ||
+    (!normalizedRubricId && /負擔行為|處分行為|無權處分|善意取得|善意受讓|售予不知情|借給.*展覽|所有權移轉行為/.test(question))
+  ) {
+    return buildTransferGoodFaithRubric(question);
   }
 
   if (
@@ -265,6 +292,20 @@ function buildQuestionRubric(question: string, rubricId?: string): Rubric {
     };
   }
 
+  if (
+    normalizedRubricId === "civil_law_transfer_good_faith" ||
+    (!normalizedRubricId && /負擔行為|處分行為|無權處分|善意取得|善意受讓|售予不知情|借給.*展覽/.test(question))
+  ) {
+    return buildTransferGoodFaithRubric(question);
+  }
+
+  if (
+    normalizedRubricId === "civil_law_tort_credit_reputation" ||
+    (!normalizedRubricId && /金融機構|信用卡|貸款|拒貸|拒絕.*貸|偽造申請文件|名譽|信用權|信用受損/.test(question))
+  ) {
+    return buildCreditReputationTortRubric(question);
+  }
+
   return {
     question_type: "case",
     primaryIssue: "侵權行為損害賠償請求是否成立",
@@ -289,6 +330,97 @@ function buildQuestionRubric(question: string, rubricId?: string): Rubric {
       element("因果關係", "high", [/因果關係|相當因果|造成|導致/], [/甲|摔壞|手機/]),
       element("法律效果", "medium", [/損害賠償|回復原狀|金錢賠償|修復費/], [/修復|價值|手機/]),
       element("損害賠償方法與範圍", "low", [/民法第?\s*196\s*條|196條|民法第?\s*213\s*條|213條|民法第?\s*215\s*條|215條|回復原狀|價值減損|金錢賠償/], [/修復|價值|手機|不能回復|顯有重大困難/]),
+    ],
+  };
+}
+
+function buildCreditReputationTortRubric(question: string): Rubric {
+  return {
+    question_type: "case",
+    rubricId: "civil_law_tort_credit_reputation",
+    primaryIssue: "未經查證通報不實資訊是否構成侵害信用或名譽之侵權責任",
+    sub_questions: [],
+    parties: extractParties(question),
+    timeline: extractTimeline(question),
+    legal_relationships: ["甲乙間可能成立侵害信用或名譽之侵權行為損害賠償關係"],
+    expected_claim_bases: ["民法第184條第1項前段侵權行為損害賠償請求權", "民法第195條第1項人格法益非財產上損害賠償"],
+    expected_issues: ["加害行為", "信用或名譽等人格法益侵害", "故意或過失", "損害", "因果關係", "民法第195條非財產上損害與回復名譽"],
+    optional_issues: ["財產上損害需具體舉證", "回復名譽或信用之適當處分"],
+    irrelevant_issues: ["物之所有權侵害若無物被毀損事實，不宜作為主軸"],
+    applicable_articles: ["民法第184條第1項前段", "民法第195條第1項"],
+    required_elements: ["不實通報行為", "信用或名譽等人格法益受侵害", "未查證之過失", "拒貸拒卡損害與因果關係"],
+    disputed_elements: ["甲未查證是否具有過失", "拒貸拒卡是否與通報具有相當因果關係", "非財產上損害是否達重大侵害程度"],
+    undisputed_elements: ["文件事後證明並非偽造", "乙申辦信用卡及貸款遭拒"],
+    acceptable_positions: ["以184成立侵權責任，195作為人格法益損害賠償與回復名譽依據"],
+    decisive_facts: ["甲未查證即通報", "文件並非偽造", "乙申辦信用卡及貸款遭拒絕"],
+    elementSpecs: [
+      element("加害行為", "high", [/通報|檢舉|告知|不實通報|偽造申請文件|偽造文件/], [/甲.*通報|金融機構|偽造申請文件|未查證/]),
+      element("信用或名譽人格法益侵害", "high", [/信用權|名譽權|人格法益|名譽|信用|社會評價|金融信用|借貸資格/], [/乙|金融機構|信用卡|貸款|拒絕|偽造/]),
+      element("故意或過失", "high", [/故意|過失|未查證|未盡.*注意義務|合理注意義務|輕率|任意/], [/甲.*未查證|通報前|文件.*非偽造/]),
+      element("損害", "high", [/損害|拒貸|拒發卡|信用卡.*遭拒|貸款.*遭拒|財產上損害|非財產上損害|慰撫金|精神慰撫金/], [/乙|信用卡|貸款|遭拒|金融機構/]),
+      element("因果關係", "high", [/因果關係|相當因果|導致|因此|造成|結果與.*行為/], [/通報|遭拒貸|拒發卡|信用卡|貸款/]),
+      element("民法第195條法律效果", "medium", [/民法第?\s*195\s*條|195\s*條|非財產上損害|慰撫金|回復名譽|適當處分|人格法益/], [/信用|名譽|金融機構|澄清|撤回/]),
+      element("財產上損害舉證", "low", [/具體損害|舉證|所失利益|高利息|轉貸費用|交易違約|具體金額/], [/貸款|信用卡|拒絕|經濟損失/]),
+    ],
+  };
+}
+
+function buildInheritanceBasicRubric(question: string): Rubric {
+  return {
+    question_type: "case",
+    rubricId: "civil_law_inheritance_basic",
+    primaryIssue: "繼承人之應繼分與特留分如何計算並主張",
+    sub_questions: [],
+    parties: extractParties(question),
+    timeline: extractTimeline(question),
+    legal_relationships: ["被繼承人死亡後繼承人間之遺產分配關係"],
+    expected_claim_bases: ["民法繼承編應繼分規定", "民法繼承編特留分規定"],
+    expected_issues: ["繼承人範圍", "應繼分計算", "特留分計算", "遺囑或贈與侵害特留分", "扣減或返還之法律效果"],
+    optional_issues: ["配偶與不同順位繼承人同為繼承時之比例", "遺產總額或特留分算定基礎", "先位順位排除後順位"],
+    irrelevant_issues: ["不當得利、侵權行為或物權返還若題目未問，不宜作為主軸"],
+    applicable_articles: ["民法第1138條", "民法第1144條", "民法第1223條", "民法第1225條"],
+    required_elements: ["繼承人範圍", "應繼分", "特留分", "侵害特留分", "扣減或返還效果"],
+    disputed_elements: ["誰屬同順位繼承人", "配偶與子女或父母同繼承時比例", "特留分是否受侵害"],
+    undisputed_elements: ["被繼承人死亡後開始繼承"],
+    acceptable_positions: ["先確認繼承人與應繼分，再計算特留分，最後判斷是否得主張扣減"],
+    decisive_facts: ["被繼承人死亡", "配偶、子女或父母等親屬身分", "遺產數額或遺囑分配"],
+    elementSpecs: [
+      element("繼承人範圍", "high", [/繼承人|民法第?\s*1138\s*條|1138\s*條|配偶|子女|直系血親卑親屬|父母|兄弟姊妹|祖父母|順位/], [/死亡|遺產|配偶|子女|父母|兄弟姊妹/]),
+      element("應繼分計算", "high", [/應繼分|民法第?\s*1144\s*條|1144\s*條|平均|均分|二分之一|1\/2|三分之一|1\/3|比例/], [/配偶|子女|父母|遺產|萬元|元/]),
+      element("特留分計算", "high", [/特留分|民法第?\s*1223\s*條|1223\s*條|二分之一|1\/2|三分之一|1\/3|應繼分.*一半|應繼分.*半/], [/遺產|遺囑|全給|配偶|子女|父母|萬元|元/]),
+      element("侵害特留分", "high", [/侵害特留分|不足特留分|低於特留分|遺囑.*侵害|遺贈.*侵害|超過.*自由處分|不得侵害/], [/遺囑|全給|贈與|遺贈|未分得|少於|不足/]),
+      element("扣減或返還效果", "medium", [/扣減|民法第?\s*1225\s*條|1225\s*條|返還|請求扣減|減殺|回復特留分|補足/], [/特留分|遺產|受遺贈人|其他繼承人|請求/]),
+      element("計算結論", "medium", [/得請求|不得請求|可主張|比例|數額|金額|結論/], [/萬元|元|二分之一|三分之一|四分之一|1\/2|1\/3|1\/4/]),
+    ],
+  };
+}
+
+function buildTransferGoodFaithRubric(question: string): Rubric {
+  return {
+    question_type: "case",
+    rubricId: "civil_law_transfer_good_faith",
+    primaryIssue: "無權處分動產時買賣契約、所有權移轉與返還請求之效力",
+    sub_questions: ["乙丙間買賣契約效力", "乙丙間所有權移轉效力", "甲得否向丙請求返還"],
+    parties: extractParties(question),
+    timeline: extractTimeline(question),
+    legal_relationships: ["甲乙間借用或展覽占有關係", "乙丙間買賣契約關係", "甲丙間可能成立所有物返還關係"],
+    expected_claim_bases: ["負擔行為與處分行為區分", "民法第118條無權處分", "動產善意取得", "民法第767條所有物返還請求權"],
+    expected_issues: ["買賣契約作為負擔行為之效力", "所有權移轉作為處分行為之效力", "無權處分", "善意取得", "甲得否請求返還"],
+    optional_issues: ["盜贓遺失物回復例外", "甲對乙之侵權、不當得利或債務不履行救濟"],
+    irrelevant_issues: ["買賣瑕疵擔保若無瑕疵給付事實，不宜作為主軸"],
+    applicable_articles: ["民法第118條", "民法第801條", "民法第948條", "民法第949條", "民法第767條"],
+    required_elements: ["負擔行為有效", "處分行為與無權處分", "善意取得要件", "甲不得向丙返還結論"],
+    disputed_elements: ["丙是否善意受讓占有", "茶具是否為盜贓或遺失物等回復例外"],
+    undisputed_elements: ["乙非所有權人", "丙不知情並已受交付"],
+    acceptable_positions: ["買賣契約有效而所有權移轉須另論", "丙善意取得時甲不得對丙返還"],
+    decisive_facts: ["甲將茶具借給乙展覽", "乙謊稱為自己所有", "售予不知情之丙並交付"],
+    elementSpecs: [
+      element("負擔行為與買賣契約效力", "high", [/負擔行為|債權行為|買賣契約|契約.*有效|不以.*處分權|無權處分.*不影響.*契約/], [/乙.*丙|買賣契約|售予|茶具/]),
+      element("處分行為與無權處分", "high", [/處分行為|物權行為|所有權移轉|無權處分|民法第?\s*118\s*條|118\s*條|效力未定|經承認始生效力/], [/乙.*非.*所有權人|不是.*所有權人|乙.*無.*處分權|甲.*茶具|交付/]),
+      element("動產善意取得", "high", [/善意取得|善意受讓|民法第?\s*801\s*條|801\s*條|民法第?\s*948\s*條|948\s*條|占有公信力|即時取得|取得.*所有權/], [/丙.*不知情|丙.*善意|交付|受讓.*占有|茶具/]),
+      element("所有物返還請求", "high", [/民法第?\s*767\s*條|767\s*條|所有物返還|返還請求|不得.*返還|不得.*請求|甲.*失去.*所有權|丙.*有權占有/], [/甲|丙|返還|茶具|善意取得/]),
+      element("盜贓遺失物回復例外", "medium", [/民法第?\s*949\s*條|949\s*條|盜贓|遺失物|非基於.*意思.*脫離|主動借給|出借物|二年|回復其物/], [/借給乙展覽|主動借給|非.*盜贓|非.*遺失物|茶具/]),
+      element("甲對乙之補充救濟", "low", [/侵權行為|民法第?\s*184\s*條|不當得利|民法第?\s*179\s*條|債務不履行|民法第?\s*226\s*條|損害賠償|價金/], [/甲|乙|追討|賣出|無法返還|茶具/]),
     ],
   };
 }
@@ -665,6 +797,15 @@ function buildCoachRewrite(rubric: Rubric, elements: ReturnType<typeof evaluateE
 
 function buildConcreteNextStep(rubric: Rubric, weakElement: ReturnType<typeof evaluateElements>[number] | undefined, answer: string) {
   const basis = rubric.expected_claim_bases[0] ?? "主要法律依據";
+  if (rubric.rubricId === "civil_law_tort_credit_reputation") {
+    if (!/195|非財產上損害|慰撫金|回復名譽|適當處分/.test(answer)) {
+      return "若能於184成立後補充第195條，說明信用或名譽人格法益受重大侵害時得請求慰撫金或回復名譽之適當處分，通常可再多拿2至5分。";
+    }
+    if (!/具體損害|舉證|所失利益|高利息|轉貸|違約/.test(answer)) {
+      return "若能區分財產上損害與非財產上損害，並提醒拒貸、拒卡造成的具體經濟損失仍須舉證，答案會更精準。";
+    }
+    return "若再提升，可在因果關係段落明確寫出：甲之不實通報使金融機構形成負面信用判斷，進而導致乙拒貸、拒卡。";
+  }
   if (/184|侵權/.test(basis)) {
     if (!/所有權.{0,12}(保護|權利|侵害)|權利侵害/.test(answer)) {
       return "若能於184部分先說明「所有權屬民法第184條保護之權利」，再分析行為人是否具有過失、損害與因果關係，通常可再多拿2至5分。";
@@ -844,6 +985,31 @@ function buildSuggestedStructure(rubric: Rubric) {
       "三、最後補充行使限制：第356條檢查通知義務、第365條期間；第364條僅在種類買賣時作為延伸。",
     ];
   }
+  if (rubric.rubricId === "civil_law_tort_credit_reputation") {
+    return [
+      "一、乙得依民法第184條第1項前段向甲請求損害賠償",
+      "（一）甲未查證即向金融機構通報乙偽造申請文件，屬加害行為。",
+      "（二）該文件事後證明並非偽造，甲未盡合理查證義務，至少具有過失。",
+      "（三）不實通報足以侵害乙之信用、名譽等人格法益。",
+      "（四）乙因此申辦信用卡及貸款遭拒，應說明損害及相當因果關係。",
+      "二、乙得依民法第195條第1項請求非財產上損害賠償，並得視情形請求回復名譽或信用之適當處分。",
+      "三、若主張財產上損害，應具體說明拒貸、拒卡造成的經濟損失及舉證方法。",
+    ];
+  }
+  if (rubric.rubricId === "civil_law_inheritance_basic") {
+    return [
+      "一、先確認繼承人範圍",
+      "（一）依題目身分關係，判斷配偶、子女、父母或其他親屬是否為繼承人。",
+      "（二）若有第一順位繼承人，原則上後順位繼承人不參與繼承。",
+      "二、計算各繼承人之應繼分",
+      "（一）依民法繼承編應繼分規定，說明配偶與同順位繼承人共同繼承時之比例。",
+      "（二）若題目有遺產總額，應換算各繼承人可分得之數額。",
+      "三、檢查是否侵害特留分",
+      "（一）先以應繼分為基礎計算特留分。",
+      "（二）若遺囑或遺贈使某繼承人低於特留分，應說明其得請求扣減或補足。",
+      "四、結論明確寫出各人應繼分、特留分及得否主張權利。",
+    ];
+  }
   if (/184|侵權/.test(basis)) {
     return [
       "一、乙得依民法第184條第1項前段向甲請求損害賠償",
@@ -943,7 +1109,10 @@ function basisToPatterns(basis: string) {
   if (/179|不當得利/.test(basis)) return [/民法第?179條|179條|不當得利|返還/];
   if (/88|錯誤|撤銷/.test(basis)) return [/民法第?\s*88\s*條|88\s*條|意思表示.*錯誤|錯誤.*意思表示|撤銷/];
   if (/91|信賴利益/.test(basis)) return [/民法第?\s*91\s*條|91\s*條|信賴利益/];
+  if (/195|人格法益|非財產/.test(basis)) return [/民法第?\s*195\s*條|195\s*條|人格法益|名譽|信用|非財產上損害|慰撫金|回復名譽/];
+  if (/繼承|應繼分|特留分/.test(basis)) return [/繼承|應繼分|特留分|民法第?\s*1138\s*條|1138\s*條|民法第?\s*1144\s*條|1144\s*條|民法第?\s*1223\s*條|1223\s*條|民法第?\s*1225\s*條|1225\s*條|扣減|返還/];
   if (/買賣|瑕疵|債務不履行/.test(basis)) return [/瑕疵擔保|不完全給付|債務不履行|民法第?\s*354\s*條|民法第?\s*359\s*條|解除契約|減少價金|損害賠償/];
+  if (/負擔行為|處分行為|無權處分|善意取得|767|返還/.test(basis)) return [/負擔行為|債權行為|處分行為|物權行為|無權處分|民法第?\s*118\s*條|善意取得|善意受讓|民法第?\s*801\s*條|民法第?\s*948\s*條|民法第?\s*767\s*條|所有物返還/];
   return [new RegExp(escapeRegExp(basis.slice(0, 4)))];
 }
 
@@ -954,6 +1123,33 @@ function issuePatternsForRubric(rubric: Rubric) {
       /民法第?\s*359\s*條|359\s*條|解除契約|解除買賣契約|減少價金|減價|顯失公平/,
       /民法第?\s*360\s*條|360\s*條|保證品質|品質保證|不履行之損害賠償|品質不符.*損害/,
       /民法第?\s*227\s*條|227\s*條|不完全給付|不符債之本旨|可歸責|加害給付/,
+    ];
+  }
+  if (rubric.rubricId === "civil_law_transfer_good_faith") {
+    return [
+      /負擔行為|債權行為|買賣契約.*有效|不以.*處分權/,
+      /處分行為|物權行為|所有權移轉|無權處分|民法第?\s*118\s*條|118\s*條|效力未定/,
+      /善意取得|善意受讓|民法第?\s*801\s*條|801\s*條|民法第?\s*948\s*條|948\s*條|占有公信力|即時取得/,
+      /民法第?\s*767\s*條|767\s*條|所有物返還|返還請求|不得.*返還|不得.*請求/,
+    ];
+  }
+  if (rubric.rubricId === "civil_law_tort_credit_reputation") {
+    return [
+      /通報|檢舉|偽造申請文件|偽造文件|不實通報/,
+      /信用權|名譽權|人格法益|信用受損|名譽受損|社會評價|金融信用/,
+      /未查證|過失|注意義務|未盡.*注意義務/,
+      /拒貸|拒發卡|信用卡.*遭拒|貸款.*遭拒|損害/,
+      /因果關係|相當因果|導致|因此|造成/,
+      /民法第?\s*195\s*條|195\s*條|非財產上損害|慰撫金|回復名譽|適當處分/,
+    ];
+  }
+  if (rubric.rubricId === "civil_law_inheritance_basic") {
+    return [
+      /繼承人|民法第?\s*1138\s*條|1138\s*條|配偶|子女|父母|順位/,
+      /應繼分|民法第?\s*1144\s*條|1144\s*條|平均|均分|比例|二分之一|三分之一|四分之一|1\/2|1\/3|1\/4/,
+      /特留分|民法第?\s*1223\s*條|1223\s*條|應繼分.*一半|應繼分.*半/,
+      /侵害特留分|不足特留分|低於特留分|遺囑.*侵害|遺贈.*侵害/,
+      /扣減|民法第?\s*1225\s*條|1225\s*條|返還|補足|回復特留分/,
     ];
   }
   return rubric.expected_issues.map((issue) => new RegExp(escapeRegExp(issue.slice(0, 4))));
@@ -971,6 +1167,34 @@ function rulePatternsForRubric(rubric: Rubric) {
       /民法第?\s*364\s*條|364\s*條|種類之債|另行交付/,
     ];
   }
+  if (rubric.rubricId === "civil_law_transfer_good_faith") {
+    return [
+      /負擔行為|債權行為|買賣契約|不以.*處分權/,
+      /處分行為|物權行為|所有權移轉|無權處分|民法第?\s*118\s*條|118\s*條|經承認始生效力|效力未定/,
+      /善意取得|善意受讓|民法第?\s*801\s*條|801\s*條|民法第?\s*948\s*條|948\s*條|占有公信力|即時取得/,
+      /民法第?\s*949\s*條|949\s*條|盜贓|遺失物|回復其物/,
+      /民法第?\s*767\s*條|767\s*條|所有物返還|有權占有|非所有人/,
+    ];
+  }
+  if (rubric.rubricId === "civil_law_tort_credit_reputation") {
+    return [
+      /民法第?\s*184\s*條|184\s*條|侵權行為|故意或過失|不法侵害他人權利/,
+      /信用權|名譽權|人格法益|人格權|社會評價|金融信用/,
+      /未查證|過失|注意義務|不法性/,
+      /損害|財產上損害|非財產上損害|慰撫金|拒貸|拒發卡/,
+      /因果關係|相當因果|導致|因此/,
+      /民法第?\s*195\s*條|195\s*條|回復名譽|適當處分/,
+    ];
+  }
+  if (rubric.rubricId === "civil_law_inheritance_basic") {
+    return [
+      /民法第?\s*1138\s*條|1138\s*條|繼承人|配偶|子女|父母|順位/,
+      /民法第?\s*1144\s*條|1144\s*條|應繼分|均分|平均|比例/,
+      /民法第?\s*1223\s*條|1223\s*條|特留分|應繼分.*一半|應繼分.*半/,
+      /民法第?\s*1225\s*條|1225\s*條|扣減|返還|補足|回復特留分/,
+      /遺囑|遺贈|侵害特留分|不足特留分|低於特留分/,
+    ];
+  }
   return rubric.required_elements.map((item) => new RegExp(escapeRegExp(item.slice(0, 4))));
 }
 
@@ -981,6 +1205,16 @@ function extractCorrectArticles(answer: string, rubric: Rubric) {
     if (/179/.test(article)) return /179\s*條|第\s*179\s*條|§\s*179/.test(answer);
     if (/88/.test(article)) return /88\s*條|第\s*88\s*條|§\s*88/.test(answer);
     if (/91/.test(article)) return /91\s*條|第\s*91\s*條|§\s*91/.test(answer);
+    if (/195/.test(article)) return /195\s*條|第\s*195\s*條|§\s*195/.test(answer);
+    if (/1138/.test(article)) return /1138\s*條|第\s*1138\s*條|§\s*1138/.test(answer);
+    if (/1144/.test(article)) return /1144\s*條|第\s*1144\s*條|§\s*1144/.test(answer);
+    if (/1223/.test(article)) return /1223\s*條|第\s*1223\s*條|§\s*1223/.test(answer);
+    if (/1225/.test(article)) return /1225\s*條|第\s*1225\s*條|§\s*1225/.test(answer);
+    if (/118/.test(article)) return /118\s*條|第\s*118\s*條|§\s*118/.test(answer);
+    if (/801/.test(article)) return /801\s*條|第\s*801\s*條|§\s*801/.test(answer);
+    if (/948/.test(article)) return /948\s*條|第\s*948\s*條|§\s*948/.test(answer);
+    if (/949/.test(article)) return /949\s*條|第\s*949\s*條|§\s*949/.test(answer);
+    if (/767/.test(article)) return /767\s*條|第\s*767\s*條|§\s*767/.test(answer);
     if (/354/.test(article)) return /354\s*條|第\s*354\s*條|§\s*354/.test(answer);
     if (/356/.test(article)) return /356\s*條|第\s*356\s*條|§\s*356/.test(answer);
     if (/359/.test(article)) return /359\s*條|第\s*359\s*條|§\s*359/.test(answer);
@@ -1012,6 +1246,24 @@ function missingCoreIssues(rubric: Rubric, answer: string) {
       return patterns.length ? !patterns.some((pattern) => pattern.test(answer)) : !new RegExp(escapeRegExp(issue.slice(0, 4))).test(answer);
     }).slice(0, 5);
   }
+  if (rubric.rubricId === "civil_law_transfer_good_faith") {
+    return rubric.expected_issues.filter((issue) => {
+      const patterns = transferIssuePatternsByIssue(issue);
+      return patterns.length ? !patterns.some((pattern) => pattern.test(answer)) : !new RegExp(escapeRegExp(issue.slice(0, 4))).test(answer);
+    }).slice(0, 5);
+  }
+  if (rubric.rubricId === "civil_law_tort_credit_reputation") {
+    return rubric.expected_issues.filter((issue) => {
+      const patterns = creditReputationIssuePatternsByIssue(issue);
+      return patterns.length ? !patterns.some((pattern) => pattern.test(answer)) : !new RegExp(escapeRegExp(issue.slice(0, 4))).test(answer);
+    }).slice(0, 5);
+  }
+  if (rubric.rubricId === "civil_law_inheritance_basic") {
+    return rubric.expected_issues.filter((issue) => {
+      const patterns = inheritanceIssuePatternsByIssue(issue);
+      return patterns.length ? !patterns.some((pattern) => pattern.test(answer)) : !new RegExp(escapeRegExp(issue.slice(0, 4))).test(answer);
+    }).slice(0, 5);
+  }
   return rubric.expected_issues.filter((issue) => !new RegExp(escapeRegExp(issue.slice(0, 4))).test(answer)).slice(0, 5);
 }
 
@@ -1027,6 +1279,66 @@ function saleDefectIssuePatternsByIssue(issue: string) {
   }
   if (/不完全給付/.test(issue)) {
     return [/民法第?\s*227\s*條|227\s*條|不完全給付|不符債之本旨|可歸責|加害給付/];
+  }
+  return [];
+}
+
+function transferIssuePatternsByIssue(issue: string) {
+  if (/買賣契約|負擔行為/.test(issue)) {
+    return [/負擔行為|債權行為|買賣契約.*有效|不以.*處分權|無權處分.*不影響.*契約/];
+  }
+  if (/所有權移轉|處分行為/.test(issue)) {
+    return [/處分行為|物權行為|所有權移轉|無權處分|民法第?\s*118\s*條|118\s*條|效力未定/];
+  }
+  if (/無權處分/.test(issue)) {
+    return [/無權處分|無處分權|非.*所有權人|不是.*所有權人|民法第?\s*118\s*條|118\s*條/];
+  }
+  if (/善意取得/.test(issue)) {
+    return [/善意取得|善意受讓|民法第?\s*801\s*條|801\s*條|民法第?\s*948\s*條|948\s*條|占有公信力|即時取得/];
+  }
+  if (/返還/.test(issue)) {
+    return [/民法第?\s*767\s*條|767\s*條|所有物返還|返還請求|不得.*返還|不得.*請求|甲.*失去.*所有權|丙.*有權占有/];
+  }
+  return [];
+}
+
+function creditReputationIssuePatternsByIssue(issue: string) {
+  if (/加害行為/.test(issue)) {
+    return [/通報|檢舉|偽造申請文件|偽造文件|不實通報/];
+  }
+  if (/信用|名譽|人格/.test(issue)) {
+    return [/信用權|名譽權|人格法益|名譽|信用|社會評價|金融信用|借貸資格/];
+  }
+  if (/故意|過失/.test(issue)) {
+    return [/未查證|過失|未盡.*注意義務|合理注意義務|故意/];
+  }
+  if (/損害/.test(issue)) {
+    return [/拒貸|拒發卡|信用卡.*遭拒|貸款.*遭拒|損害|慰撫金|非財產上損害/];
+  }
+  if (/因果/.test(issue)) {
+    return [/因果關係|相當因果|導致|因此|造成/];
+  }
+  if (/195|非財產|回復名譽/.test(issue)) {
+    return [/民法第?\s*195\s*條|195\s*條|非財產上損害|慰撫金|回復名譽|適當處分/];
+  }
+  return [];
+}
+
+function inheritanceIssuePatternsByIssue(issue: string) {
+  if (/繼承人/.test(issue)) {
+    return [/繼承人|民法第?\s*1138\s*條|1138\s*條|配偶|子女|父母|順位/];
+  }
+  if (/應繼分/.test(issue)) {
+    return [/應繼分|民法第?\s*1144\s*條|1144\s*條|平均|均分|比例|二分之一|三分之一|四分之一|1\/2|1\/3|1\/4/];
+  }
+  if (/特留分/.test(issue) && !/侵害/.test(issue)) {
+    return [/特留分|民法第?\s*1223\s*條|1223\s*條|應繼分.*一半|應繼分.*半/];
+  }
+  if (/侵害特留分/.test(issue)) {
+    return [/侵害特留分|不足特留分|低於特留分|遺囑.*侵害|遺贈.*侵害|未分得|少於/];
+  }
+  if (/扣減|返還|法律效果/.test(issue)) {
+    return [/扣減|民法第?\s*1225\s*條|1225\s*條|返還|請求扣減|補足|回復特留分/];
   }
   return [];
 }

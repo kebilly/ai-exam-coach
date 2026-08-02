@@ -53,3 +53,20 @@ export type EnglishQuestion = {
   knowledge_point: string;
   difficulty: number;
 };
+
+export type EnglishExamItem = EnglishQuestion & {
+  item_no: number;
+  section: string;
+  answer_type: "choice" | "text";
+  points: number;
+};
+
+export type EnglishExam = {
+  kind: "postal_english_exam";
+  title: string;
+  level: string;
+  question_type: "full_exam";
+  total_questions: number;
+  total_points: number;
+  items: EnglishExamItem[];
+};

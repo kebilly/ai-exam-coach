@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getAuthedUser, ensureProfile } from "@/lib/api/auth";
+import { assertMemberUnlocked, getAuthedUser, ensureProfile } from "@/lib/api/auth";
 import { assertUsageAllowed, logUsage } from "@/lib/api/usage";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { assertServerEnv } from "@/lib/env";
-import { gradeCivilLawEssay } from "@/lib/civil-law-grading/service";
+import { gradeCivilLawEssay, isVerifiedCivilLawRubricId } from "@/lib/civil-law-grading/service";
 import { toLegacyFeedback } from "@/lib/civil-law-grading/legacy-adapter";
 
 export async function POST(request: Request) {
@@ -12,7 +12,8 @@ export async function POST(request: Request) {
     const { user, error } = await getAuthedUser(request);
     if (error) return error;
     await ensureProfile(user);
-    await assertUsageAllowed(user.id);
+    await assertMemberUnlocked(user.id);
+    await assertUsageAllowed(user.id, "law_grade");
 
     const body = await request.json();
     const question = String(body.question ?? "").trim();
@@ -23,7 +24,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "請輸入題目與至少 10 字以上的答案。" }, { status: 400 });
     }
 
-    const gradingResult = await gradeCivilLawEssay({ question, answer, rubricId });
+    const preliminaryResult = rubricId ? null : await gradeCivilLawEssay({ question, answer });
+    const resolvedRubricId = rubricId || preliminaryResult?.grading_diagnostics.rubric_id;
+    if (!isVerifiedCivilLawRubricId(resolvedRubricId)) {
+      return NextResponse.json(
+        { error: "此題尚未建立穩定批改標準，請先使用隨機出題中的已驗證題型，或請管理者新增本題 rubric。" },
+        { status: 422 },
+      );
+    }
+
+    const gradingResult = preliminaryResult ?? await gradeCivilLawEssay({ question, answer, rubricId: resolvedRubricId });
     const feedback = toLegacyFeedback(gradingResult, { mode: "civil-law-rubric-v1" });
     const supabase = createSupabaseAdmin();
     const { data, error: insertError } = await supabase

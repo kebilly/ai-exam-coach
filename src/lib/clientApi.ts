@@ -1,10 +1,11 @@
 import type { Session } from "@supabase/supabase-js";
 
 export async function apiFetch<T>(session: Session, input: RequestInfo | URL, init?: RequestInit): Promise<T> {
+  const isFormData = init?.body instanceof FormData;
   const response = await fetch(input, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       Authorization: `Bearer ${session.access_token}`,
       ...(init?.headers ?? {}),
     },
@@ -16,4 +17,3 @@ export async function apiFetch<T>(session: Session, input: RequestInfo | URL, in
   }
   return data as T;
 }
-

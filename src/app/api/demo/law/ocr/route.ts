@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 import { createOpenAI } from "@/lib/api/openai";
+import { env } from "@/lib/env";
 
 export async function POST(request: Request) {
   try {
+    if (!env.demoApiEnabled) {
+      return NextResponse.json({ error: "Demo API is disabled in production." }, { status: 403 });
+    }
+
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: "尚未設定 OPENAI_API_KEY，無法辨識圖片。" }, { status: 400 });
     }

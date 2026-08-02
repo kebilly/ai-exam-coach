@@ -1,9 +1,11 @@
 import {
   calculateWeightedElementAverage,
   gradeCivilLawEssay,
+  isVerifiedCivilLawRubricId,
 } from "../src/lib/civil-law-grading/service";
 import { dimensionKeys } from "../src/lib/civil-law-grading/config";
 import { toLegacyFeedback } from "../src/lib/civil-law-grading/legacy-adapter";
+import { pickPostalLawQuestion } from "../src/lib/postal-question-bank";
 
 const question = "甲不慎將乙所有之手機摔壞，乙得向甲主張何種權利？";
 
@@ -82,6 +84,19 @@ const cases = [
 const errorRevocationQuestion = "甲因重大誤認商品真實價格而向乙表示願以高價購買，事後發現錯誤。甲得否撤銷意思表示？";
 const errorRevocationAnswer =
   "可以，但需要符合特定的法律條件。依據民法第88條規定，如果意思表示的內容有錯誤，或者表意人如果知道事實就不會做出這個表示，表意人可以將該意思表示撤銷。不過，甲想要成功撤銷，必須同時滿足以下兩個關鍵要件：第一，該錯誤在客觀上必須重要。商品的資格或物之性質，若在交易上認為重要者，其錯誤視為意思表示內容的錯誤。價格本身通常可能被歸類為動機錯誤，但如果甲的錯誤是源自於對商品本身真實價值或性質的重大誤認，這在交易上屬於重要的物之性質錯誤，可以視為意思表示內容的錯誤。第二，甲自己不能有過失。民法第88條第1項但書規定，錯誤必須非由表意人自己之過失者才可以撤銷。如果甲只是看錯標價或自己沒查證清楚，通常會被認定有過失而不能撤銷；如果是因乙的誤導或商品包裝標示讓人極易誤解，且甲已盡注意義務，才可能被認定為無過失。撤銷後，依民法第91條，意思表示可能自始無效，但甲仍可能須賠償乙信賴利益損害，除非乙明知其錯誤。";
+const transferQuestion = "甲將名家茶具一組借給乙展覽，乙謊稱為自己所有，將該茶具售予不知情之丙並交付。請說明乙、丙間買賣契約及所有權移轉行為之效力，並判斷甲得否向丙請求返還。";
+const transferAnswer =
+  "一、乙、丙間買賣契約之效力：買賣契約屬於債權行為或負擔行為，旨在使雙方負擔給付義務，負擔行為不以有處分權為必要。乙雖非茶具所有權人，但無權處分不影響買賣契約本身成立，因此乙、丙間買賣契約有效。二、乙、丙間所有權移轉行為之效力：所有權移轉屬物權行為或處分行為，以處分人有處分權為前提。乙並非茶具所有權人，將甲的茶具交付給丙，屬無權處分，原則上依民法第118條第1項經承認始生效力。惟丙為不知情之第三人，且乙已將茶具交付丙，丙受讓動產占有並為善意，得依民法第801條及第948條第1項善意取得該茶具所有權。三、甲不得向丙請求返還茶具。因丙已善意取得所有權，甲已非所有權人，且丙為有權占有，故甲不得依民法第767條第1項向丙請求返還。又本件茶具係甲主動借給乙展覽，非盜贓或遺失物，無民法第949條回復其物規定之適用。甲可另向乙主張侵權行為、不當得利或債務不履行損害賠償。";
+
+const creditReputationQuestion =
+  "甲未查證即向多家金融機構通報乙偽造申請文件，事後證明該文件並非偽造，乙因此申辦信用卡及貸款均遭拒絕。乙得否向甲主張侵權行為損害賠償？";
+const creditReputationAnswer =
+  "乙得依民法第 184 條第 1 項前段（侵權行為）或民法第 195 條第 1 項（侵害信用權與名譽權之非財產上損害賠償），向甲請求損害賠償。甲向多家金融機構通報乙偽造文件，事後證明文件並非偽造，該不實通報侵害乙之信用權及名譽權。甲在通報前未經實質查證，即任意向金融機構檢舉，顯然未盡合理注意義務，具有過失。乙申辦信用卡及貸款均遭拒絕，與甲的不實通報間具有相當因果關係。若乙有具體經濟損失，得依第184條請求財產上損害賠償；另信用、名譽等人格法益受重大侵害時，乙得依第195條請求慰撫金，並得請求甲向原通報金融機構撤回不實通報或為回復信用之適當處分。";
+const inheritanceQuestion = "甲死亡，遺有配偶乙及子女丙、丁。甲以遺囑將全部遺產給乙，丙、丁得否主張特留分？";
+const inheritanceHighAnswer =
+  "本題應先確認繼承人及應繼分，再判斷特留分是否受侵害。依民法第1138條，子女為第一順位繼承人；配偶乙依民法第1144條與第一順位子女丙、丁共同繼承時，乙、丙、丁之應繼分原則上各為三分之一。又依民法第1223條，子女之特留分為其應繼分二分之一，因此丙、丁各有六分之一之特留分。甲遺囑將全部遺產給乙，使丙、丁完全未分得遺產，低於其特留分，已侵害特留分。故丙、丁得依特留分規定請求扣減或補足其各六分之一之特留分。";
+const inheritanceLowAnswer =
+  "甲死亡後，乙、丙、丁都是家人，所以遺產應該平均分配。甲雖然有寫遺囑，但丙、丁也可以要求分一些。";
 
 function assert(condition: unknown, message: string) {
   if (!condition) throw new Error(message);
@@ -136,8 +151,18 @@ function runWeightingUnitTests() {
   );
 }
 
+function runVerifiedQuestionBankTests() {
+  for (let index = 0; index < 50; index += 1) {
+    const question = pickPostalLawQuestion({ verifiedOnly: true });
+    assert(question.verified, "formal law random question should be verified");
+    assert(isVerifiedCivilLawRubricId(question.rubric_id), `formal law random question should carry a verified rubric id, got ${question.rubric_id}`);
+  }
+  assert(!isVerifiedCivilLawRubricId(undefined), "missing rubric id should not be treated as verified");
+}
+
 async function run() {
   runWeightingUnitTests();
+  runVerifiedQuestionBankTests();
   const results = new Map<string, Awaited<ReturnType<typeof gradeCivilLawEssay>>>();
   for (const item of cases) {
     const result = await gradeCivilLawEssay({ question, answer: item.answer });
@@ -207,6 +232,101 @@ async function run() {
   assert(
     !explicitRubricRevocation.question_analysis.expected_claim_bases.some((basis) => /瑕疵|債務不履行/.test(basis)),
     "explicit rubric_id should prevent sale defect misclassification",
+  );
+
+  const transfer = await gradeCivilLawEssay({
+    question: transferQuestion,
+    answer: transferAnswer,
+    rubricId: "civil_law_transfer_good_faith",
+  });
+  assert(
+    transfer.raw_total_score >= 82 && transfer.raw_total_score <= 96,
+    `transfer/good-faith answer should be high-scoring, got ${transfer.raw_total_score}`,
+  );
+  assert(
+    transfer.dimension_scores.issue_spotting.score >= 12,
+    `transfer/good-faith answer must not get issue spotting near zero, got ${transfer.dimension_scores.issue_spotting.score}`,
+  );
+  assert(
+    transfer.issue_analysis.expected_issues.some((issue) => /負擔行為/.test(issue)) &&
+      transfer.issue_analysis.expected_issues.some((issue) => /善意取得/.test(issue)),
+    "transfer/good-faith question should use the transfer rubric",
+  );
+  assert(
+    !transfer.issue_analysis.missing_core_issues.some((issue) => /負擔行為|處分行為|善意取得|返還/.test(issue)),
+    "completed transfer issues must not be listed as missing",
+  );
+
+  const creditReputation = await gradeCivilLawEssay({
+    question: creditReputationQuestion,
+    answer: creditReputationAnswer,
+  });
+  const creditReputationFeedback = toLegacyFeedback(creditReputation);
+  const creditReputationVisibleFeedback = [
+    ...creditReputationFeedback.weaknesses,
+    ...creditReputationFeedback.missing_points,
+    ...creditReputationFeedback.next_practice_focus,
+    creditReputationFeedback.revision_advice,
+    creditReputationFeedback.model_answer_outline,
+  ].join("\n");
+  assert(
+    creditReputation.grading_diagnostics.rubric_id === "civil_law_tort_credit_reputation",
+    `credit/reputation tort question should use the dedicated rubric, got ${creditReputation.grading_diagnostics.rubric_id}`,
+  );
+  assert(
+    creditReputation.raw_total_score >= 84 && creditReputation.raw_total_score <= 94,
+    `credit/reputation tort answer should be high-scoring, got ${creditReputation.raw_total_score}`,
+  );
+  assert(
+    creditReputation.dimension_scores.issue_spotting.score >= 12,
+    `credit/reputation tort answer should identify core issues, got ${creditReputation.dimension_scores.issue_spotting.score}`,
+  );
+  assert(
+    creditReputation.legal_authority_analysis.correct_articles.some((article) => /195/.test(article)),
+    "article 195 should be recognized as a correct legal basis",
+  );
+  assert(
+    !creditReputation.legal_authority_analysis.incorrect_articles.some((article) => /195/.test(article)),
+    "article 195 must not be listed as incorrect",
+  );
+  assert(
+    !creditReputation.issue_analysis.missing_core_issues.some((issue) => /信用|名譽|過失|損害|因果|195/.test(issue)),
+    "completed credit/reputation tort issues must not be listed as missing",
+  );
+  assert(
+    !/手機|摔壞|所有權屬民法第184條保護|196|213|215/.test(creditReputationVisibleFeedback),
+    "credit/reputation tort feedback must not reuse phone/property-damage wording",
+  );
+
+  const inheritanceHigh = await gradeCivilLawEssay({
+    question: inheritanceQuestion,
+    answer: inheritanceHighAnswer,
+  });
+  const inheritanceLow = await gradeCivilLawEssay({
+    question: inheritanceQuestion,
+    answer: inheritanceLowAnswer,
+  });
+  assert(
+    inheritanceHigh.grading_diagnostics.rubric_id === "civil_law_inheritance_basic",
+    `inheritance question should use inheritance rubric, got ${inheritanceHigh.grading_diagnostics.rubric_id}`,
+  );
+  assert(
+    inheritanceHigh.raw_total_score >= 82 && inheritanceHigh.raw_total_score <= 94,
+    `high-quality inheritance answer should be high-scoring, got ${inheritanceHigh.raw_total_score}`,
+  );
+  assert(
+    inheritanceLow.raw_total_score <= 65,
+    `conclusion-only inheritance answer should not be high-scoring, got ${inheritanceLow.raw_total_score}`,
+  );
+  assert(
+    inheritanceHigh.legal_authority_analysis.correct_articles.some((article) => /1138/.test(article)) &&
+      inheritanceHigh.legal_authority_analysis.correct_articles.some((article) => /1144/.test(article)) &&
+      inheritanceHigh.legal_authority_analysis.correct_articles.some((article) => /1223/.test(article)),
+    "inheritance articles 1138, 1144, and 1223 should be recognized",
+  );
+  assert(
+    !inheritanceHigh.issue_analysis.missing_core_issues.some((issue) => /繼承人|應繼分|特留分/.test(issue)),
+    "completed inheritance issues must not be listed as missing",
   );
 
   const unjustQuestion = "甲誤匯一萬元至乙帳戶，乙知情後拒絕返還。甲得否向乙請求返還？";

@@ -12,8 +12,8 @@ export async function GET(request: Request) {
     await ensureProfile(user);
 
     const supabase = createSupabaseAdmin();
-    const [profileRes, lawRes, englishRes, usage] = await Promise.all([
-      supabase.from("user_profiles").select("*").eq("id", user.id).single(),
+    const [profileRes, lawRes, englishRes, usage, lawUsage, englishUsage] = await Promise.all([
+      supabase.from("user_profiles").select("id, email, display_name, role, plan").eq("id", user.id).single(),
       supabase
         .from("law_submissions")
         .select("id, score, question, created_at")
@@ -27,6 +27,8 @@ export async function GET(request: Request) {
         .order("created_at", { ascending: false })
         .limit(5),
       getTodayUsage(user.id),
+      getTodayUsage(user.id, "law_grade"),
+      getTodayUsage(user.id, "english_generate"),
     ]);
 
     if (profileRes.error) throw profileRes.error;
@@ -42,6 +44,10 @@ export async function GET(request: Request) {
       profile: profileRes.data,
       todayUsage: usage,
       dailyLimit: env.dailyUsageLimit,
+      todayLawUsage: lawUsage,
+      lawDailyLimit: env.lawDailyLimit,
+      todayEnglishUsage: englishUsage,
+      englishDailyLimit: env.englishDailyLimit,
       averageLawScore,
       recentLaw: lawRes.data ?? [],
       recentEnglish: englishRes.data ?? [],
@@ -50,4 +56,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Dashboard failed" }, { status: 500 });
   }
 }
-

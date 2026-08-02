@@ -43,10 +43,23 @@ create table if not exists public.usage_logs (
   created_at timestamp with time zone not null default now()
 );
 
+create table if not exists public.member_invite_codes (
+  id uuid primary key default gen_random_uuid(),
+  code_hash text not null unique,
+  label text,
+  active boolean not null default true,
+  max_uses integer not null default 1,
+  used_count integer not null default 0,
+  used_by uuid[] not null default '{}',
+  expires_at timestamp with time zone,
+  created_at timestamp with time zone not null default now()
+);
+
 alter table public.user_profiles enable row level security;
 alter table public.law_submissions enable row level security;
 alter table public.english_exercises enable row level security;
 alter table public.usage_logs enable row level security;
+alter table public.member_invite_codes enable row level security;
 
 create policy "Users can read own profile"
   on public.user_profiles for select
@@ -68,3 +81,9 @@ create policy "Users can read own usage logs"
   on public.usage_logs for select
   using (auth.uid() = user_id);
 
+-- Deployment hardening:
+-- Authenticated users may update only their own display name through the public API.
+-- Never grant direct client-side update access to role or plan; membership activation
+-- must go through server routes using the service role key.
+revoke update on table public.user_profiles from authenticated;
+grant update (display_name) on table public.user_profiles to authenticated;

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createOpenAI, safeJsonParse } from "@/lib/api/openai";
+import { env } from "@/lib/env";
 import { pickPostalEnglishQuestion } from "@/lib/postal-question-bank";
 import type { EnglishQuestion } from "@/types";
 
@@ -31,6 +32,10 @@ JSON schema:
 
 export async function POST(request: Request) {
   try {
+    if (!env.demoApiEnabled) {
+      return NextResponse.json({ error: "Demo API is disabled in production." }, { status: 403 });
+    }
+
     const body = await request.json();
     const level = String(body.level ?? "intermediate");
     const questionType = String(body.question_type ?? "grammar");

@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 import { gradeCivilLawEssay } from "@/lib/civil-law-grading/service";
 import { toLegacyFeedback } from "@/lib/civil-law-grading/legacy-adapter";
 
 export async function POST(request: Request) {
   try {
+    if (!env.demoApiEnabled) {
+      return NextResponse.json({ error: "Demo API is disabled in production." }, { status: 403 });
+    }
+
     const body = await request.json();
     const question = String(body.question ?? "").trim();
     const answer = String(body.answer ?? "").trim();

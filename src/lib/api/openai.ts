@@ -1,3 +1,4 @@
+import "server-only";
 import OpenAI from "openai";
 import { env } from "@/lib/env";
 
@@ -14,4 +15,3 @@ export function safeJsonParse<T>(value: string): T {
     .trim();
   return JSON.parse(cleaned) as T;
 }
-
