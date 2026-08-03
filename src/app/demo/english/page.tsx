@@ -1,104 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  BookOpenCheck,
-  CheckCircle2,
-  FileQuestion,
-  Lightbulb,
-  Loader2,
-  RotateCcw,
-  Sparkles,
-  Target,
-  XCircle,
-} from "lucide-react";
-import type { EnglishQuestion } from "@/types";
+import { useEffect, useState } from "react";
+import { ArrowLeft, BookOpenCheck, CheckCircle2, FileQuestion, LockKeyhole, Sparkles, Target } from "lucide-react";
 
-type DemoEnglishQuestion = EnglishQuestion & {
-  mode?: string;
-  warning?: string;
+const t = {
+  back: "\u56de\u9996\u9801",
+  badge: "\u975c\u614b\u5c55\u793a\u7248",
+  memberOnly: "\u6b63\u5f0f\u7df4\u7fd2\u9700\u767b\u5165\u4e26\u555f\u7528\u6703\u54e1\u6b0a\u9650",
+  title: "\u82f1\u6587\u8003\u5377\u7df4\u7fd2\u6d41\u7a0b\u5c55\u793a",
+  desc: "\u9019\u500b\u9801\u9762\u5c55\u793a\u82f1\u6587\u8003\u5377\u7df4\u7fd2\u7684\u4e3b\u8981\u6d41\u7a0b\uff1a\u984c\u578b\u8a2d\u5b9a\u3001\u9078\u9805\u5224\u65b7\u3001\u7b54\u6848\u56de\u994b\u8207\u4e2d\u6587\u89e3\u6790\u3002\u6b63\u5f0f\u8003\u5377\u8acb\u767b\u5165\u5f8c\u7531\u7ba1\u7406\u8005\u555f\u7528\u3002",
+  formal: "\u524d\u5f80\u6b63\u5f0f\u82f1\u6587\u7df4\u7fd2",
+  setup: "\u984c\u578b\u8a2d\u5b9a\u7bc4\u4f8b",
+  preview: "\u984c\u76ee\u9810\u89bd",
+  play: "\u64ad\u653e\u4f5c\u7b54\u6a21\u64ec",
+  reset: "\u91cd\u7f6e\u5c55\u793a",
+  replay: "\u91cd\u65b0\u64ad\u653e",
+  autoPlaying: "\u6b63\u5728\u81ea\u52d5\u5c55\u793a\u4f5c\u7b54\u6d41\u7a0b...",
+  stepQuestion: "\u6b65\u9a5f 1\uff1a\u5148\u8b80\u984c\uff0c\u5224\u65b7\u53e5\u5b50\u8981\u6e2c\u9a57\u7684\u6587\u6cd5\u9ede\u3002",
+  stepAnswer: "\u6b65\u9a5f 2\uff1a\u5c0d\u7167\u56db\u500b\u9078\u9805\uff0c\u6392\u9664\u4e0d\u7b26\u5408\u7528\u6cd5\u7684\u7b54\u6848\u3002",
+  stepExplain: "\u6b65\u9a5f 3\uff1a\u986f\u793a\u6b63\u89e3\u8207\u4e2d\u6587\u89e3\u6790\uff0c\u8b93\u5b78\u751f\u77e5\u9053\u932f\u5728\u54ea\u88e1\u3002",
+  answer: "\u4e2d\u6587\u89e3\u6790",
+  result: "\u7b54\u5c0d",
+  rating: "\u7df4\u7fd2\u8868\u73fe",
+  explanation:
+    "remember \u5f8c\u9762\u82e5\u63a5\u300c\u8981\u8a18\u5f97\u53bb\u505a\u67d0\u4e8b\u300d\uff0c\u8981\u7528 remember to + \u539f\u578b\u52d5\u8a5e\u3002\u56e0\u6b64\u6b63\u78ba\u7b54\u6848\u662f to apply\u3002",
 };
 
-const levels = [
-  { value: "postal-ii-to-i", label: "專二升專一", caption: "字彙、對話、文意選填為主" },
-  { value: "postal-i-to-operation", label: "專一升營運", caption: "中英翻譯與閱讀測驗為主" },
-  { value: "intermediate", label: "混合隨機", caption: "郵局內升綜合練習" },
-];
-
-const questionTypes = [
-  { value: "random", label: "隨機", caption: "依郵局考古題比例抽題" },
-  { value: "vocabulary", label: "字彙", caption: "依句意選最適當單字" },
-  { value: "dialogue", label: "對話", caption: "依上下文補完整對話" },
-  { value: "reading", label: "閱讀", caption: "短文細節、主旨與推論" },
-  { value: "translation_zh_en", label: "中翻英", caption: "公共議題與職場英文" },
-  { value: "translation_en_zh", label: "英翻中", caption: "新聞英文與社會趨勢" },
-];
-
-const quickTopics = ["business email", "technology", "law", "travel", "workplace", "daily life"];
+const options = ["A. apply", "B. applying", "C. applied", "D. to apply"];
 
 export default function EnglishDemoPage() {
-  const [level, setLevel] = useState("intermediate");
-  const [questionType, setQuestionType] = useState("random");
-  const [topic, setTopic] = useState("business email");
-  const [question, setQuestion] = useState<DemoEnglishQuestion | null>(null);
-  const [answer, setAnswer] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState(0);
+  const [runId, setRunId] = useState(0);
 
-  const isCorrect = useMemo(() => {
-    if (!question || !submitted) return null;
-    return normalize(answer) === normalize(question.correct_answer);
-  }, [answer, question, submitted]);
+  useEffect(() => {
+    setStage(0);
+    const timers = [
+      window.setTimeout(() => setStage(1), 900),
+      window.setTimeout(() => setStage(2), 2200),
+      window.setTimeout(() => setStage(3), 3900),
+    ];
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [runId]);
 
-  async function generateQuestion(event?: FormEvent) {
-    event?.preventDefault();
-    setLoading(true);
-    setError("");
-    setQuestion(null);
-    setAnswer("");
-    setSubmitted(false);
-
-    try {
-      const response = await fetch("/api/demo/english/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level, question_type: questionType, topic }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "產生題目失敗，請稍後再試。");
-      setQuestion(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "產生題目失敗，請稍後再試。");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function reset() {
-    setQuestion(null);
-    setAnswer("");
-    setSubmitted(false);
-    setError("");
+  function replay() {
+    setRunId((value) => value + 1);
   }
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
       <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-          <Link
-            className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700"
-            href="/"
-          >
+          <Link className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700" href="/">
             <ArrowLeft size={16} />
-            回首頁
+            {t.back}
           </Link>
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <Sparkles size={14} />
-            English Generator Demo
+            <LockKeyhole size={14} />
+            {t.memberOnly}
           </div>
         </div>
       </header>
@@ -109,128 +68,94 @@ export default function EnglishDemoPage() {
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">
                 <BookOpenCheck size={14} />
-                English Exam Trainer
+                {t.badge}
               </div>
-              <h1 className="text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">
-                英文自動出題試用
-              </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-                選擇程度、題型與主題後，系統會產生一題考試練習題，並在作答後提供正解、解析與知識點。
-              </p>
+              <h1 className="text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">{t.title}</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{t.desc}</p>
             </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
-              此頁不需登入、不保存資料。AI 產生內容仍可能有誤，請以正式教材與教師說明為準。
-            </div>
+            <Link className="btn-primary justify-center bg-emerald-600 hover:bg-emerald-700" href="/english">
+              {t.formal}
+            </Link>
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
-          <form className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" onSubmit={generateQuestion}>
-            <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                  <FileQuestion size={20} />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-950">出題設定</h2>
-                  <p className="text-xs text-slate-500">控制難度、題型與主題</p>
-                </div>
+        <div className="relative grid gap-5 xl:grid-cols-[420px_minmax(0,1fr)]">
+          <CursorGuide stage={stage} />
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-xl bg-emerald-600 text-white">
+                <FileQuestion size={20} />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-950">{t.setup}</h2>
+                <p className="text-xs text-slate-500">{stage >= 1 ? t.stepQuestion : t.autoPlaying}</p>
+              </div>
+            </div>
+            <div className="grid gap-3">
+              <DemoField label="Level" value="Postal promotion / intermediate" />
+              <DemoField label="Question type" value="Grammar + vocabulary + reading" />
+              <DemoField label="Daily limit" value="1 paper / day after member activation" />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button className="btn-primary bg-emerald-600 hover:bg-emerald-700" onClick={replay} type="button">
+                <Sparkles size={16} />
+                {t.replay}
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-xl bg-slate-950 text-white">
+                <Target size={20} />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-950">{t.preview}</h2>
+                <p className="text-xs text-slate-500">Question, answer, Chinese explanation</p>
               </div>
             </div>
 
-            <div className="space-y-5 p-5">
-              <Selector title="程度" value={level} options={levels} onChange={setLevel} />
-              <Selector title="題型" value={questionType} options={questionTypes} onChange={setQuestionType} />
-
-              <label className="block text-sm font-medium text-slate-700">
-                主題
-                <input
-                  className="field mt-2"
-                  placeholder="business email, technology, law..."
-                  value={topic}
-                  onChange={(event) => setTopic(event.target.value)}
-                />
-              </label>
-
-              <div className="flex flex-wrap gap-2">
-                {quickTopics.map((item) => (
-                  <button
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                      topic === item
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                    key={item}
-                    onClick={() => setTopic(item)}
-                    type="button"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-
-              {error ? (
-                <div className="flex gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm leading-6 text-red-700">
-                  <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-                  {error}
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
-                <button className="btn-primary min-w-36 bg-emerald-600 hover:bg-emerald-700" disabled={loading} type="submit">
-                  {loading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} />
-                      產生中
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={16} />
-                      產生題目
-                    </>
-                  )}
-                </button>
-                <button className="btn-secondary" onClick={reset} type="button">
-                  <RotateCcw size={16} />
-                  清空
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 bg-slate-950 px-5 py-4 text-white">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-10 place-items-center rounded-xl bg-white/10 text-white">
-                    <Target size={20} />
-                  </div>
-                  <div>
-                    <h2 className="font-semibold">練習題</h2>
-                    <p className="text-xs text-slate-300">Question, answer, explanation</p>
-                  </div>
-                </div>
-                {question ? (
-                  <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-100">
-                    難度 {question.difficulty}/5
-                  </div>
-                ) : null}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Question</p>
+              <h3 className="mt-2 text-xl font-semibold leading-8 text-slate-950">Please remember _____ the application form before Friday.</h3>
+              <div className="mt-4 grid gap-2">
+                {options.map((option) => {
+                  const isCorrect = stage >= 2 && option.startsWith("D.");
+                  return (
+                    <div
+                      className={`rounded-xl border px-4 py-3 text-sm ${
+                        isCorrect ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-700"
+                      }`}
+                      key={option}
+                    >
+                      {option}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="p-5">
-              {!question && !loading ? <EmptyState /> : null}
-              {loading ? <LoadingState /> : null}
-              {question ? (
-                <QuestionCard
-                  answer={answer}
-                  isCorrect={isCorrect}
-                  onAnswer={setAnswer}
-                  onSubmit={() => setSubmitted(true)}
-                  question={question}
-                  submitted={submitted}
-                />
-              ) : null}
+            <div className="mt-5">
+              {stage < 3 ? (
+                <WaitingState stage={stage} />
+              ) : (
+                <div className="space-y-3 animate-in fade-in duration-500">
+                  <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-amber-900">{t.rating}</span>
+                      <StarRating value={5} max={5} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 font-semibold text-emerald-800">
+                    <CheckCircle2 size={18} />
+                    {t.result}: D. to apply
+                  </div>
+                  <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm leading-7 text-blue-900">
+                    <h3 className="mb-2 font-semibold text-blue-950">{t.answer}</h3>
+                    {t.explanation}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
         </div>
@@ -239,170 +164,71 @@ export default function EnglishDemoPage() {
   );
 }
 
-function Selector({
-  title,
-  value,
-  options,
-  onChange,
-}: {
-  title: string;
-  value: string;
-  options: { value: string; label: string; caption: string }[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-medium text-slate-700">{title}</p>
-      <div className="mt-2 grid gap-2">
-        {options.map((option) => (
-          <button
-            className={`rounded-xl border px-4 py-3 text-left transition ${
-              value === option.value
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-            key={option.value}
-            onClick={() => onChange(option.value)}
-            type="button"
-          >
-            <span className="block text-sm font-semibold">{option.label}</span>
-            <span className="mt-1 block text-xs text-slate-500">{option.caption}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm leading-6 text-slate-600">
-      選擇出題條件後按「產生題目」，這裡會顯示題目、選項、作答結果與解析。
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="rounded-xl bg-emerald-50 p-6 text-sm leading-6 text-emerald-800">
-      <div className="mb-3 flex items-center gap-2 font-semibold">
-        <Loader2 className="animate-spin" size={16} />
-        正在產生題目
-      </div>
-      系統正在依程度、題型與主題設計一題練習題。
-    </div>
-  );
-}
-
-function QuestionCard({
-  answer,
-  isCorrect,
-  onAnswer,
-  onSubmit,
-  question,
-  submitted,
-}: {
-  answer: string;
-  isCorrect: boolean | null;
-  onAnswer: (value: string) => void;
-  onSubmit: () => void;
-  question: DemoEnglishQuestion;
-  submitted: boolean;
-}) {
-  const isWrittenQuestion = !question.options.length;
+function WaitingState({ stage }: { stage: number }) {
+  const steps = [t.stepQuestion, t.stepAnswer, t.stepExplain];
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-2">
-        <Badge>{question.level}</Badge>
-        <Badge>{question.question_type}</Badge>
-        <Badge>{question.knowledge_point}</Badge>
-        <Badge>{question.mode === "openai" ? "OpenAI" : "Demo bank"}</Badge>
-      </div>
-
-      {question.warning ? (
-        <div className="flex gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-          <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-          OpenAI 回應：{question.warning}
+    <div className="space-y-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+      <div className="mb-2 font-semibold text-slate-800">{t.autoPlaying}</div>
+      {steps.map((step, index) => (
+        <div
+          className={`rounded-xl border px-3 py-2 transition ${
+            stage >= index ? "border-emerald-100 bg-white text-emerald-900 shadow-sm" : "border-slate-200 bg-slate-100 text-slate-400"
+          }`}
+          key={step}
+        >
+          {step}
         </div>
-      ) : null}
-
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Question</p>
-        <h3 className="mt-2 whitespace-pre-wrap text-xl font-semibold leading-8 text-slate-950">
-          {question.question}
-        </h3>
-      </div>
-
-      {isWrittenQuestion ? (
-        <label className="block text-sm font-medium text-slate-700">
-          Your answer
-          <textarea
-            className="field mt-2 min-h-40 resize-y leading-7"
-            disabled={submitted}
-            onChange={(event) => onAnswer(event.target.value)}
-            placeholder="請輸入你的翻譯..."
-            value={answer}
-          />
-        </label>
-      ) : (
-        <div className="grid gap-3">
-          {question.options.map((option) => {
-            const selected = answer === option;
-            const correct = submitted && normalize(option) === normalize(question.correct_answer);
-            const wrongSelected = submitted && selected && !correct;
-            return (
-              <button
-                className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition ${
-                  correct
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                    : wrongSelected
-                      ? "border-rose-200 bg-rose-50 text-rose-900"
-                      : selected
-                        ? "border-blue-200 bg-blue-50 text-blue-900"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                }`}
-                disabled={submitted}
-                key={option}
-                onClick={() => onAnswer(option)}
-                type="button"
-              >
-                <span>{option}</span>
-                {correct ? <CheckCircle2 size={18} /> : wrongSelected ? <XCircle size={18} /> : null}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <button className="btn-primary bg-emerald-600 hover:bg-emerald-700" disabled={!answer || submitted} onClick={onSubmit} type="button">
-        送出答案
-      </button>
-
-      {submitted ? (
-        <div className={`rounded-2xl border p-5 ${isWrittenQuestion || isCorrect ? "border-emerald-100 bg-emerald-50" : "border-rose-100 bg-rose-50"}`}>
-          <div className={`flex items-center gap-2 font-semibold ${isWrittenQuestion || isCorrect ? "text-emerald-800" : "text-rose-800"}`}>
-            {isWrittenQuestion || isCorrect ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-            {isWrittenQuestion ? "參考譯文" : isCorrect ? "答對了" : "答錯了"}：{question.correct_answer}
-          </div>
-          <div className="mt-4 flex gap-2 text-sm leading-6 text-slate-700">
-            <Lightbulb className="mt-0.5 shrink-0 text-amber-600" size={17} />
-            <p>{question.explanation}</p>
-          </div>
-        </div>
-      ) : null}
+      ))}
     </div>
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
+function StarRating({ value, max }: { value: number; max: number }) {
+  const stars = Math.max(0, Math.min(5, Math.round((value / max) * 5)));
   return (
-    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-      {children}
+    <span className="font-mono text-lg tracking-wide" aria-label={`${stars} / 5`}>
+      <span className="text-amber-500">{"\u2605".repeat(stars)}</span>
+      <span className="text-slate-300">{"\u2606".repeat(5 - stars)}</span>
     </span>
   );
 }
 
-function normalize(value: string) {
-  return value.trim().toLowerCase().replace(/^[a-d]\.\s*/i, "");
+function CursorGuide({ stage }: { stage: number }) {
+  if (stage >= 3) return null;
+
+  const positions = [
+    "left-[48%] top-[115px]",
+    "left-[70%] top-[250px]",
+    "left-[70%] top-[405px]",
+  ];
+  const label = [t.stepQuestion, t.stepAnswer, t.stepExplain][stage] ?? t.stepQuestion;
+
+  return (
+    <div
+      className={`pointer-events-none absolute z-20 hidden transition-all duration-700 ease-out xl:block ${positions[stage] ?? positions[0]}`}
+      aria-hidden="true"
+    >
+      <div className="relative">
+        <div className="absolute -left-3 -top-3 size-10 animate-ping rounded-full bg-emerald-300/35" />
+        <div className="relative flex items-start gap-2">
+          <svg className="mt-1 h-7 w-7 drop-shadow" viewBox="0 0 28 28" fill="none">
+            <path d="M6 3l15 14-7 1.2L10 25 6 3z" fill="#059669" stroke="white" strokeWidth="2" />
+          </svg>
+          <div className="max-w-64 rounded-xl border border-emerald-100 bg-white/95 px-3 py-2 text-xs font-semibold leading-5 text-emerald-900 shadow-lg">
+            {label}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DemoField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
 }
