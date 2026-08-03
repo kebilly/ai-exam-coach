@@ -124,6 +124,9 @@ export default function LawDemoPage() {
           </aside>
         </div>
       </div>
+      <footer className="mx-auto max-w-7xl px-4 pb-6 pt-2 text-xs text-slate-500">
+        <div className="border-t border-slate-200 pt-4">© 2026 AI Exam Coach. All rights reserved. Built by KK.</div>
+      </footer>
     </main>
   );
 }
@@ -204,9 +207,9 @@ function CursorGuide({ stage }: { stage: number }) {
   if (stage >= 3) return null;
 
   const positions = [
-    "left-[18%] top-[112px]",
-    "left-[44%] top-[310px]",
-    "left-[74%] top-[150px]",
+    "left-[8%] top-[92px]",
+    "left-[8%] top-[300px]",
+    "right-[18px] top-[92px]",
   ];
   const label = [t.stepQuestion, t.stepSubsumption, t.stepFeedback][stage] ?? t.stepQuestion;
 
@@ -217,11 +220,11 @@ function CursorGuide({ stage }: { stage: number }) {
     >
       <div className="relative">
         <div className="absolute -left-3 -top-3 size-10 animate-ping rounded-full bg-sky-300/35" />
-        <div className="relative flex items-start gap-2">
-          <svg className="mt-1 h-7 w-7 drop-shadow" viewBox="0 0 28 28" fill="none">
+        <div className="relative flex max-w-56 items-start gap-2">
+          <svg className="mt-1 h-6 w-6 shrink-0 drop-shadow" viewBox="0 0 28 28" fill="none">
             <path d="M6 3l15 14-7 1.2L10 25 6 3z" fill="#0284c7" stroke="white" strokeWidth="2" />
           </svg>
-          <div className="max-w-64 rounded-xl border border-sky-100 bg-white/95 px-3 py-2 text-xs font-semibold leading-5 text-sky-900 shadow-lg">
+          <div className="rounded-lg border border-sky-100 bg-white/95 px-2.5 py-2 text-[11px] font-semibold leading-4 text-sky-900 shadow-lg">
             {label}
           </div>
         </div>

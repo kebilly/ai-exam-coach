@@ -160,6 +160,9 @@ export default function EnglishDemoPage() {
           </section>
         </div>
       </div>
+      <footer className="mx-auto max-w-7xl px-4 pb-6 pt-2 text-xs text-slate-500">
+        <div className="border-t border-slate-200 pt-4">© 2026 AI Exam Coach. All rights reserved. Built by KK.</div>
+      </footer>
     </main>
   );
 }
@@ -198,9 +201,9 @@ function CursorGuide({ stage }: { stage: number }) {
   if (stage >= 3) return null;
 
   const positions = [
-    "left-[48%] top-[115px]",
-    "left-[70%] top-[250px]",
-    "left-[70%] top-[405px]",
+    "left-[40%] top-[96px]",
+    "right-[18px] top-[220px]",
+    "right-[18px] top-[360px]",
   ];
   const label = [t.stepQuestion, t.stepAnswer, t.stepExplain][stage] ?? t.stepQuestion;
 
@@ -211,11 +214,11 @@ function CursorGuide({ stage }: { stage: number }) {
     >
       <div className="relative">
         <div className="absolute -left-3 -top-3 size-10 animate-ping rounded-full bg-emerald-300/35" />
-        <div className="relative flex items-start gap-2">
-          <svg className="mt-1 h-7 w-7 drop-shadow" viewBox="0 0 28 28" fill="none">
+        <div className="relative flex max-w-56 items-start gap-2">
+          <svg className="mt-1 h-6 w-6 shrink-0 drop-shadow" viewBox="0 0 28 28" fill="none">
             <path d="M6 3l15 14-7 1.2L10 25 6 3z" fill="#059669" stroke="white" strokeWidth="2" />
           </svg>
-          <div className="max-w-64 rounded-xl border border-emerald-100 bg-white/95 px-3 py-2 text-xs font-semibold leading-5 text-emerald-900 shadow-lg">
+          <div className="rounded-lg border border-emerald-100 bg-white/95 px-2.5 py-2 text-[11px] font-semibold leading-4 text-emerald-900 shadow-lg">
             {label}
           </div>
         </div>

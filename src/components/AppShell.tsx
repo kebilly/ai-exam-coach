@@ -13,6 +13,7 @@ const text = {
   history: "\u5b78\u7fd2\u7d00\u9304",
   admin: "\u7ba1\u7406\u5f8c\u53f0",
   logout: "\u767b\u51fa",
+  footer: "\u00a9 2026 AI Exam Coach. All rights reserved. Built by KK.",
 };
 
 const navItems = [
@@ -67,6 +68,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <main className="min-w-0">{children}</main>
       </div>
+      <footer className="mx-auto max-w-6xl px-4 pb-6 text-xs text-slate-500">
+        <div className="border-t border-slate-200 pt-4">{text.footer}</div>
+      </footer>
     </div>
   );
 }
