@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "請上傳答案照片。" }, { status: 400 });
+      return NextResponse.json({ error: "請上傳圖片檔案。" }, { status: 400 });
     }
 
     if (!file.type.startsWith("image/")) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     if (file.size > 8 * 1024 * 1024) {
-      return NextResponse.json({ error: "圖片請小於 8MB。" }, { status: 400 });
+      return NextResponse.json({ error: "圖片大小不得超過 8MB。" }, { status: 400 });
     }
 
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -38,12 +38,12 @@ export async function POST(request: Request) {
         {
           role: "system",
           content:
-            "你是台灣民法申論答案 OCR 助手。請只辨識圖片中的手寫或印刷答案文字，保留原意、段落與標號。不要批改，不要補寫，不要改寫法律內容。若看不清楚，請以「[辨識不清]」標記。",
+            "你是民法申論答案 OCR 助手。請忠實辨識圖片中的手寫或印刷文字，只輸出可讀文字。不要批改、不要補寫、不要猜測不存在的內容；無法辨識處請以「[無法辨識]」標記。",
         },
         {
           role: "user",
           content: [
-            { type: "text", text: "請辨識這張民法申論答案照片，輸出可直接貼入答案欄的純文字。" },
+            { type: "text", text: "請辨識這張民法申論答案圖片中的文字，保留段落與標號。" },
             { type: "image_url", image_url: { url: dataUrl } },
           ],
         },

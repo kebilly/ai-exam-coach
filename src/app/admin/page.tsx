@@ -10,6 +10,7 @@ type AdminData = {
   users: AdminUser[];
   law: LawRecord[];
   english: EnglishRecord[];
+  postal: PostalAttemptRecord[];
   usage: UsageRecord[];
   inviteCodes: InviteCode[];
 };
@@ -40,6 +41,16 @@ type EnglishRecord = {
   created_at: string;
 };
 
+type PostalAttemptRecord = {
+  id: string;
+  user_id: string;
+  career_level: string;
+  score: number | null;
+  correct_count: number | null;
+  total_questions: number | null;
+  created_at: string;
+};
+
 type UsageRecord = {
   id: string;
   user_id: string;
@@ -62,61 +73,100 @@ type GeneratedCode = {
   label: string;
 };
 
+type PostalRuleQuestion = {
+  id: string;
+  career_level: string;
+  question_format: string;
+  law_area: string;
+  difficulty: number;
+  question: string;
+  options: { A: string; B: string; C: string; D: string } | null;
+  answer: string;
+  explanation: string;
+  source_articles: { law_name: string; article_no: string; note: string }[];
+  tags: string[];
+  source_type: string;
+  review_status: "pending" | "approved" | "rejected" | "needs_edit" | string;
+  created_at: string;
+};
+
 type RecordRow = {
   cells: string[];
   action?: React.ReactNode;
 };
 
 const t = {
-  title: "\u7ba1\u7406\u5f8c\u53f0",
-  subtitle: "\u7ba1\u7406\u6703\u54e1\u555f\u7528\u3001\u9080\u8acb\u78bc\u8207\u4f7f\u7528\u7d00\u9304\u3002",
-  loading: "\u8f09\u5165\u5f8c\u53f0\u8cc7\u6599\u4e2d...",
-  users: "\u6703\u54e1\u7ba1\u7406",
-  inviteCodes: "\u9080\u8acb\u78bc\u7ba1\u7406",
-  inviteDesc: "\u9080\u8acb\u78bc\u9810\u8a2d\u53ea\u80fd\u4f7f\u7528\u4e00\u6b21\uff0c\u9069\u5408\u5206\u767c\u7d66\u5c11\u91cf\u540c\u4e8b\u6e2c\u8a66\u3002",
-  generatedCodes: "\u65b0\u7522\u751f\u7684\u9080\u8acb\u78bc",
-  generatedHint: "\u9080\u8acb\u78bc\u660e\u78bc\u53ea\u6703\u5728\u9019\u88e1\u986f\u793a\u4e00\u6b21\uff0c\u8acb\u7acb\u5373\u8a18\u9304\u6216\u5206\u767c\u7d66\u4f7f\u7528\u8005\u3002",
-  lawRecords: "\u6c11\u6cd5\u6279\u6539\u7d00\u9304",
-  englishRecords: "\u82f1\u6587\u7df4\u7fd2\u7d00\u9304",
-  usageRecords: "AI \u4f7f\u7528\u7d00\u9304",
-  userSummary: "\u4f7f\u7528\u8005\u6458\u8981",
-  filterAll: "\u5168\u90e8\u4f7f\u7528\u8005",
-  filterLabel: "\u7be9\u9078\u4f7f\u7528\u8005",
-  empty: "\u76ee\u524d\u6c92\u6709\u8cc7\u6599",
-  correct: "\u7b54\u5c0d",
-  wrong: "\u7b54\u932f",
-  notSubmitted: "\u672a\u4f5c\u7b54",
-  generate: "\u7522\u751f\u9080\u8acb\u78bc",
-  generating: "\u7522\u751f\u4e2d...",
-  activate: "\u555f\u7528\u6703\u54e1",
-  deactivate: "\u6539\u70ba\u514d\u8cbb",
-  makeAdmin: "\u8a2d\u70ba Admin",
-  makeUser: "\u6539\u70ba User",
-  enableCode: "\u555f\u7528",
-  disableCode: "\u505c\u7528",
-  saved: "\u5df2\u66f4\u65b0",
-  deleteRecord: "\u522a\u9664",
-  deleteConfirm: "\u78ba\u5b9a\u8981\u522a\u9664\u9019\u7b46\u7d00\u9304\u55ce\uff1f\u6b64\u64cd\u4f5c\u7121\u6cd5\u5fa9\u539f\u3002",
-  unknownUser: "\u672a\u77e5\u4f7f\u7528\u8005",
-  displayName: "\u986f\u793a\u540d\u7a31",
-  createdAt: "\u5efa\u7acb\u6642\u9593",
-  registeredAt: "\u8a3b\u518a\u6642\u9593",
-  action: "\u64cd\u4f5c",
-  status: "\u72c0\u614b",
-  usageCount: "\u4f7f\u7528\u6b21\u6578",
-  user: "\u4f7f\u7528\u8005",
-  score: "\u5206\u6578",
-  question: "\u984c\u76ee",
-  time: "\u6642\u9593",
-  type: "\u984c\u578b",
-  result: "\u7d50\u679c",
-  event: "\u52d5\u4f5c",
-  lawCount: "\u6c11\u6cd5\u6b21\u6578",
-  englishCount: "\u82f1\u6587\u6b21\u6578",
-  aiCount: "AI \u6b21\u6578",
-  count: "\u6578\u91cf",
-  label: "\u6a19\u7c64",
+  title: "管理後台",
+  subtitle: "管理會員啟用、邀請碼、練習紀錄與郵政法規題庫。",
+  loading: "載入後台資料中...",
+  users: "會員管理",
+  inviteCodes: "邀請碼管理",
+  inviteDesc: "邀請碼預設只能使用一次，適合分發給少量同事測試。",
+  generatedCodes: "新產生的邀請碼",
+  generatedHint: "邀請碼明碼只會在這裡顯示一次，請立刻記錄或分發給使用者。",
+  lawRecords: "民法批改紀錄",
+  englishRecords: "英文練習紀錄",
+  postalRecords: "郵政法規練習紀錄",
+  usageRecords: "AI 使用紀錄",
+  postalRules: "郵政法規題庫審核",
+  postalRulesDesc: "可產生郵政法規練習題，審核通過後才會進入正式練習。",
+  generateSeedPostal: "產生種子題",
+  generateAiPostal: "AI 產生題目",
+  approve: "通過",
+  reject: "退回",
+  needsEdit: "需修改",
+  setupWarning:
+    "郵政法規資料表尚未建立。請先到 Supabase SQL Editor 執行更新後的 supabase/schema.sql 與 supabase/security-hardening.sql。",
+  userSummary: "使用者摘要",
+  filterAll: "全部使用者",
+  filterLabel: "篩選使用者",
+  empty: "目前沒有資料",
+  correct: "答對",
+  wrong: "答錯",
+  notSubmitted: "未作答",
+  generate: "產生邀請碼",
+  generating: "產生中...",
+  activate: "啟用會員",
+  deactivate: "改為免費",
+  makeAdmin: "設為 Admin",
+  makeUser: "改為 User",
+  enableCode: "啟用",
+  disableCode: "停用",
+  saved: "已更新",
+  deleteRecord: "刪除",
+  deleteConfirm: "確定要刪除這筆紀錄嗎？此操作無法復原。",
+  unknownUser: "未知使用者",
+  displayName: "顯示名稱",
+  createdAt: "建立時間",
+  registeredAt: "註冊時間",
+  action: "操作",
+  status: "狀態",
+  usageCount: "使用次數",
+  user: "使用者",
+  score: "分數",
+  question: "題目",
+  time: "時間",
+  type: "題型",
+  result: "結果",
+  event: "動作",
+  lawCount: "民法次數",
+  englishCount: "英文次數",
+  postalCount: "郵政法規次數",
+  aiCount: "AI 次數",
+  count: "數量",
+  label: "標籤",
+  careerLevel: "職階",
+  lawArea: "法規類別",
+  answer: "答案",
+  explanation: "解析",
 };
+
+const careerLevelOptions = [
+  { value: "professional_2_to_1", label: "專業職（二）晉升專業職（一）" },
+  { value: "professional_1_to_operations", label: "專業職（一）晉升營運職" },
+];
+
+const lawAreaOptions = ["郵政法", "郵政儲金匯兌法", "簡易人壽保險法", "郵件處理規則", "郵務營業規章"];
 
 export default function AdminPage() {
   return (
@@ -140,6 +190,12 @@ function Admin({ session }: { session: Session }) {
   const [generatedCodes, setGeneratedCodes] = useState<GeneratedCode[]>([]);
   const [generating, setGenerating] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState("all");
+  const [postalQuestions, setPostalQuestions] = useState<PostalRuleQuestion[]>([]);
+  const [postalBusy, setPostalBusy] = useState(false);
+  const [postalSetupRequired, setPostalSetupRequired] = useState(false);
+  const [postalCareerLevel, setPostalCareerLevel] = useState("professional_2_to_1");
+  const [postalLawArea, setPostalLawArea] = useState("郵政法");
+  const [postalCount, setPostalCount] = useState(5);
 
   async function reload() {
     setError("");
@@ -147,8 +203,18 @@ function Admin({ session }: { session: Session }) {
     setData(result);
   }
 
+  async function reloadPostalQuestions() {
+    const result = await apiFetch<{ questions: PostalRuleQuestion[]; setupRequired?: boolean }>(session, "/api/admin/postal-rules");
+    setPostalQuestions(result.questions);
+    setPostalSetupRequired(Boolean(result.setupRequired));
+  }
+
   useEffect(() => {
     reload().catch((err) => setError(err instanceof Error ? err.message : "Admin load failed"));
+    reloadPostalQuestions().catch(() => {
+      setPostalQuestions([]);
+      setPostalSetupRequired(true);
+    });
   }, [session]);
 
   async function updateUser(userId: string, patch: { role?: string; plan?: string }) {
@@ -181,7 +247,7 @@ function Admin({ session }: { session: Session }) {
         body: JSON.stringify({ count: inviteCount, label: inviteLabel }),
       });
       setGeneratedCodes(result.codes);
-      setMessage(`\u5df2\u7522\u751f ${result.codes.length} \u7d44\u9080\u8acb\u78bc`);
+      setMessage(`已產生 ${result.codes.length} 組邀請碼`);
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invite code generation failed");
@@ -208,7 +274,49 @@ function Admin({ session }: { session: Session }) {
     }
   }
 
-  async function deleteRecord(type: "law" | "english" | "usage", id: string) {
+  async function generatePostalQuestions(mode: "seed" | "ai") {
+    setPostalBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await apiFetch<{ questions: PostalRuleQuestion[] }>(session, "/api/admin/postal-rules", {
+        method: "POST",
+        body: JSON.stringify({
+          mode,
+          count: postalCount,
+          career_level: postalCareerLevel,
+          question_format: "single_choice",
+          law_area: postalLawArea,
+        }),
+      });
+      setMessage(`已產生 ${result.questions.length} 題郵政法規題目`);
+      await reloadPostalQuestions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Postal rules generation failed");
+    } finally {
+      setPostalBusy(false);
+    }
+  }
+
+  async function reviewPostalQuestion(id: string, reviewStatus: "approved" | "rejected" | "needs_edit") {
+    setBusyId(id);
+    setError("");
+    setMessage("");
+    try {
+      await apiFetch<{ ok: boolean }>(session, "/api/admin/postal-rules", {
+        method: "PATCH",
+        body: JSON.stringify({ id, review_status: reviewStatus }),
+      });
+      setMessage(t.saved);
+      await reloadPostalQuestions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Postal rules review failed");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function deleteRecord(type: "law" | "english" | "postal" | "usage", id: string) {
     if (!window.confirm(t.deleteConfirm)) return;
     const busyKey = `${type}:${id}`;
     setBusyId(busyKey);
@@ -234,6 +342,7 @@ function Admin({ session }: { session: Session }) {
       ...data,
       law: data.law.filter((item) => item.user_id === selectedUserId),
       english: data.english.filter((item) => item.user_id === selectedUserId),
+      postal: data.postal.filter((item) => item.user_id === selectedUserId),
       usage: data.usage.filter((item) => item.user_id === selectedUserId),
     };
   }, [data, selectedUserId]);
@@ -244,6 +353,7 @@ function Admin({ session }: { session: Session }) {
       user,
       lawCount: data.law.filter((item) => item.user_id === user.id).length,
       englishCount: data.english.filter((item) => item.user_id === user.id).length,
+      postalCount: data.postal.filter((item) => item.user_id === user.id).length,
       usageCount: data.usage.filter((item) => item.user_id === user.id).length,
     }));
   }, [data]);
@@ -281,9 +391,10 @@ function Admin({ session }: { session: Session }) {
             ))}
           </select>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
           <StatCard label={t.lawCount} value={filtered.law.length} />
           <StatCard label={t.englishCount} value={filtered.english.length} />
+          <StatCard label={t.postalCount} value={filtered.postal.length} />
           <StatCard label={t.aiCount} value={filtered.usage.length} />
         </div>
       </section>
@@ -300,12 +411,13 @@ function Admin({ session }: { session: Session }) {
                 <th className="px-2 py-2">Plan</th>
                 <th className="px-2 py-2">{t.lawCount}</th>
                 <th className="px-2 py-2">{t.englishCount}</th>
+                <th className="px-2 py-2">{t.postalCount}</th>
                 <th className="px-2 py-2">{t.registeredAt}</th>
                 <th className="px-2 py-2">{t.action}</th>
               </tr>
             </thead>
             <tbody>
-              {summaries.map(({ user, lawCount, englishCount }) => (
+              {summaries.map(({ user, lawCount, englishCount, postalCount }) => (
                 <tr className="border-t border-slate-200" key={user.id}>
                   <td className="px-2 py-3 text-slate-800">{user.email}</td>
                   <td className="px-2 py-3 text-slate-700">{user.display_name ?? "-"}</td>
@@ -317,19 +429,14 @@ function Admin({ session }: { session: Session }) {
                   </td>
                   <td className="px-2 py-3 text-slate-700">{lawCount}</td>
                   <td className="px-2 py-3 text-slate-700">{englishCount}</td>
+                  <td className="px-2 py-3 text-slate-700">{postalCount}</td>
                   <td className="px-2 py-3 text-slate-600">{formatDate(user.created_at)}</td>
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <SmallButton
-                        disabled={busyId === user.id}
-                        onClick={() => updateUser(user.id, { plan: user.plan === "member" ? "free" : "member" })}
-                      >
+                      <SmallButton disabled={busyId === user.id} onClick={() => updateUser(user.id, { plan: user.plan === "member" ? "free" : "member" })}>
                         {user.plan === "member" ? t.deactivate : t.activate}
                       </SmallButton>
-                      <SmallButton
-                        disabled={busyId === user.id}
-                        onClick={() => updateUser(user.id, { role: user.role === "admin" ? "user" : "admin" })}
-                      >
+                      <SmallButton disabled={busyId === user.id} onClick={() => updateUser(user.id, { role: user.role === "admin" ? "user" : "admin" })}>
                         {user.role === "admin" ? t.makeUser : t.makeAdmin}
                       </SmallButton>
                     </div>
@@ -348,15 +455,7 @@ function Admin({ session }: { session: Session }) {
             <p className="mt-1 text-sm leading-6 text-slate-600">{t.inviteDesc}</p>
           </div>
           <form className="grid gap-2 sm:grid-cols-[90px_160px_auto]" onSubmit={generateInviteCodes}>
-            <input
-              aria-label={t.count}
-              className="field"
-              max={50}
-              min={1}
-              type="number"
-              value={inviteCount}
-              onChange={(event) => setInviteCount(Number(event.target.value))}
-            />
+            <input aria-label={t.count} className="field" max={50} min={1} type="number" value={inviteCount} onChange={(event) => setInviteCount(Number(event.target.value))} />
             <input aria-label={t.label} className="field" value={inviteLabel} onChange={(event) => setInviteLabel(event.target.value)} />
             <button className="btn-primary" disabled={generating} type="submit">
               {generating ? t.generating : t.generate}
@@ -409,11 +508,7 @@ function Admin({ session }: { session: Session }) {
                   </tr>
                 ))
               ) : (
-                <tr>
-                  <td className="py-3 text-slate-500" colSpan={5}>
-                    {t.empty}
-                  </td>
-                </tr>
+                <EmptyRow colSpan={5} />
               )}
             </tbody>
           </table>
@@ -436,14 +531,21 @@ function Admin({ session }: { session: Session }) {
         title={t.englishRecords}
         headers={[t.user, t.type, t.result, t.time, t.action]}
         rows={filtered.english.map((item) => ({
-          cells: [
-            userLabel(item.user_id),
-            `${item.level}/${item.question_type}`,
-            item.is_correct === null ? t.notSubmitted : item.is_correct ? t.correct : t.wrong,
-            formatDate(item.created_at),
-          ],
+          cells: [userLabel(item.user_id), `${item.level}/${item.question_type}`, item.is_correct === null ? t.notSubmitted : item.is_correct ? t.correct : t.wrong, formatDate(item.created_at)],
           action: (
             <SmallButton disabled={busyId === `english:${item.id}`} onClick={() => deleteRecord("english", item.id)}>
+              {t.deleteRecord}
+            </SmallButton>
+          ),
+        }))}
+      />
+      <RecordTable
+        title={t.postalRecords}
+        headers={[t.user, t.careerLevel, t.score, "答對題數", t.time, t.action]}
+        rows={filtered.postal.map((item) => ({
+          cells: [userLabel(item.user_id), item.career_level, `${item.score ?? "-"} / 100`, `${item.correct_count ?? "-"} / ${item.total_questions ?? "-"}`, formatDate(item.created_at)],
+          action: (
+            <SmallButton disabled={busyId === `postal:${item.id}`} onClick={() => deleteRecord("postal", item.id)}>
               {t.deleteRecord}
             </SmallButton>
           ),
@@ -461,6 +563,87 @@ function Admin({ session }: { session: Session }) {
           ),
         }))}
       />
+
+      <section className="panel">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-semibold text-slate-950">{t.postalRules}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{t.postalRulesDesc}</p>
+          </div>
+          <div className="grid gap-2 md:grid-cols-[220px_160px_90px_auto_auto]">
+            <select className="field" value={postalCareerLevel} onChange={(event) => setPostalCareerLevel(event.target.value)}>
+              {careerLevelOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+            <select className="field" value={postalLawArea} onChange={(event) => setPostalLawArea(event.target.value)}>
+              {lawAreaOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <input className="field" max={10} min={1} type="number" value={postalCount} onChange={(event) => setPostalCount(Number(event.target.value))} />
+            <button className="btn-secondary" disabled={postalBusy} onClick={() => generatePostalQuestions("seed")} type="button">
+              {t.generateSeedPostal}
+            </button>
+            <button className="btn-primary" disabled={postalBusy} onClick={() => generatePostalQuestions("ai")} type="button">
+              {postalBusy ? "產生中..." : t.generateAiPostal}
+            </button>
+          </div>
+        </div>
+
+        {postalSetupRequired ? <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">{t.setupWarning}</div> : null}
+
+        <div className="mt-4 overflow-auto">
+          <table className="w-full min-w-[1100px] text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-2 py-2">{t.status}</th>
+                <th className="px-2 py-2">{t.careerLevel}</th>
+                <th className="px-2 py-2">{t.lawArea}</th>
+                <th className="px-2 py-2">{t.question}</th>
+                <th className="px-2 py-2">{t.answer}</th>
+                <th className="px-2 py-2">{t.explanation}</th>
+                <th className="px-2 py-2">{t.action}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {postalQuestions.length ? (
+                postalQuestions.map((item) => (
+                  <tr className="border-t border-slate-200" key={item.id}>
+                    <td className="px-2 py-3">
+                      <StatusBadge tone={item.review_status === "approved" ? "green" : item.review_status === "rejected" ? "slate" : "blue"}>{item.review_status}</StatusBadge>
+                    </td>
+                    <td className="px-2 py-3 text-slate-700">{item.career_level}</td>
+                    <td className="px-2 py-3 text-slate-700">{item.law_area}</td>
+                    <td className="px-2 py-3 text-slate-800">{item.question}</td>
+                    <td className="px-2 py-3 text-slate-700">{item.answer}</td>
+                    <td className="px-2 py-3 text-slate-600">{item.explanation.slice(0, 100)}</td>
+                    <td className="px-2 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "approved")}>
+                          {t.approve}
+                        </SmallButton>
+                        <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "needs_edit")}>
+                          {t.needsEdit}
+                        </SmallButton>
+                        <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "rejected")}>
+                          {t.reject}
+                        </SmallButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <EmptyRow colSpan={7} />
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
@@ -502,16 +685,22 @@ function RecordTable({ title, headers, rows }: { title: string; headers: string[
                 </tr>
               ))
             ) : (
-              <tr>
-                <td className="py-3 text-slate-500" colSpan={headers.length}>
-                  {t.empty}
-                </td>
-              </tr>
+              <EmptyRow colSpan={headers.length} />
             )}
           </tbody>
         </table>
       </div>
     </section>
+  );
+}
+
+function EmptyRow({ colSpan }: { colSpan: number }) {
+  return (
+    <tr>
+      <td className="py-3 text-slate-500" colSpan={colSpan}>
+        {t.empty}
+      </td>
+    </tr>
   );
 }
 

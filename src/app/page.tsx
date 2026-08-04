@@ -7,94 +7,92 @@ import {
   FileText,
   KeyRound,
   LockKeyhole,
+  ScrollText,
   ShieldCheck,
   Sparkles,
   TimerReset,
 } from "lucide-react";
 
-const text = {
-  brandSub: "\u90f5\u5c40\u5167\u5347\u8003\u8a66\u7df4\u7fd2\u5e73\u53f0",
-  login: "\u767b\u5165",
-  register: "\u8a3b\u518a\u5e33\u865f",
-  badge: "\u5167\u90e8\u8a66\u7528\u7248\uff1a\u767b\u5165\u5f8c\u7531\u7ba1\u7406\u8005\u555f\u7528",
-  heroTitle: "\u90f5\u5c40\u5167\u5347\u8003\u8a66\u7684 AI \u7df4\u7fd2\u6559\u7df4",
-  heroDesc:
-    "\u6574\u5408\u6c11\u6cd5\u7533\u8ad6\u6279\u6539\u8207\u82f1\u6587\u984c\u76ee\u7df4\u7fd2\uff0c\u5e6b\u52a9\u8003\u751f\u7528\u66f4\u6709\u7d50\u69cb\u7684\u65b9\u5f0f\u7df4\u7fd2\u3001\u6aa2\u8996\u5f31\u9ede\uff0c\u4e26\u7d2f\u7a4d\u81ea\u5df1\u7684\u5b78\u7fd2\u7d00\u9304\u3002",
-  lawDemo: "\u8a66\u7528\u6c11\u6cd5\u6279\u6539",
-  englishDemo: "\u8a66\u7528\u82f1\u6587\u7df4\u7fd2",
-  lawLimit: "\u6c11\u6cd5\u7df4\u7fd2",
-  englishLimit: "\u82f1\u6587\u7df4\u7fd2",
-  controlledUse: "\u4f7f\u7528\u6b0a\u9650",
-  moduleEyebrow: "Practice Modules",
-  moduleTitle: "\u76ee\u524d\u53ef\u7528\u7df4\u7fd2\u6a21\u7d44",
-  moduleDesc: "\u6b63\u5f0f\u7df4\u7fd2\u9700\u767b\u5165\u4e26\u7531\u7ba1\u7406\u8005\u555f\u7528\uff1b\u8a66\u7528\u9801\u9762\u53ef\u7528\u65bc\u5feb\u901f\u6aa2\u8996\u529f\u80fd\u6548\u679c\u3002",
-  controlTitle: "\u5e33\u865f\u8207\u4f7f\u7528\u6b0a\u9650",
-  controlDesc: "\u5e33\u865f\u8a3b\u518a\u5f8c\u4e0d\u6703\u81ea\u52d5\u555f\u7528\u6b63\u5f0f\u7df4\u7fd2\u3002\u7ba1\u7406\u8005\u53ef\u5728\u5f8c\u53f0\u958b\u901a\u6703\u54e1\u3001\u767c\u653e\u4e00\u6b21\u6027\u9080\u8acb\u78bc\uff0c\u4e26\u6aa2\u8996\u4f7f\u7528\u7d00\u9304\u3002",
-  adminControl: "\u7ba1\u7406\u8005\u53ef\u63a7\u5236\u8ab0\u80fd\u6b63\u5f0f\u4f7f\u7528",
-  adminControlDesc:
-    "\u9019\u500b\u7248\u672c\u9069\u5408\u5148\u7d66\u5c11\u91cf\u540c\u4e8b\u8a66\u7528\uff0c\u900f\u904e\u5f8c\u53f0\u555f\u7528\u3001\u9080\u8acb\u78bc\u8207\u6bcf\u65e5\u6b21\u6578\u9650\u5236\uff0c\u78ba\u4fdd\u4f7f\u7528\u7bc4\u570d\u53ef\u63a7\uff0c\u4e26\u6301\u7e8c\u6821\u6e96\u6279\u6539\u54c1\u8cea\u8207\u984c\u76ee\u65b9\u5411\u3002",
-  workflowEyebrow: "Workflow",
-  workflowTitle: "\u5efa\u8b70\u7df4\u7fd2\u6d41\u7a0b",
-  footer: "\u00a9 2026 AI Exam Coach. All rights reserved.",
-  footerDesc: "Built by KK.",
-};
-
 const practiceEntries = [
   {
-    title: "\u6c11\u6cd5\u7533\u8ad6 AI \u6279\u6539",
-    description: "\u8f38\u5165\u6c11\u6cd5\u7533\u8ad6\u7b54\u6848\u5f8c\uff0c\u7cfb\u7d71\u6703\u4f9d\u722d\u9ede\u3001\u6cd5\u689d\u3001\u6db5\u651d\u8207\u7d50\u8ad6\u7d66\u4e88\u56de\u994b\u3002",
-    meta: "\u6bcf\u65e5\u6700\u591a 2 \u6b21",
+    title: "民法申論批改",
+    description: "針對民法申論答案提供分數、爭點、法條、論證與結論回饋，協助考生看出真正失分原因。",
+    meta: "正式會員每日 2 次",
     icon: ClipboardCheck,
     href: "/demo/law",
-    action: "\u958b\u59cb\u6c11\u6cd5\u7df4\u7fd2",
+    action: "試看民法 demo",
     accent: "sky",
   },
   {
-    title: "\u82f1\u6587\u7d9c\u5408\u984c\u76ee\u7df4\u7fd2",
-    description: "\u4f9d\u90f5\u5c40\u5167\u5347\u8003\u8a66\u984c\u578b\u8a2d\u8a08\uff0c\u63d0\u4f9b\u55ae\u5b57\u3001\u6587\u6cd5\u3001\u95b1\u8b80\u8207\u89e3\u6790\u7df4\u7fd2\u3002",
-    meta: "\u6bcf\u65e5\u6700\u591a 1 \u4efd\u8003\u5377",
+    title: "英文完整考卷",
+    description: "依郵局內升考試方向設計英文練習，包含字彙、文法、克漏字、閱讀與中文解析。",
+    meta: "正式會員每日 1 回",
     icon: BookOpenCheck,
     href: "/demo/english",
-    action: "\u958b\u59cb\u82f1\u6587\u7df4\u7fd2",
+    action: "試看英文 demo",
     accent: "indigo",
+  },
+  {
+    title: "郵政法規選擇題",
+    description: "依郵政法、郵儲法、壽險法、郵件處理規則與郵務營業規章建立練習題型。",
+    meta: "正式會員每日 1 回",
+    icon: ScrollText,
+    href: "/demo/postal-rules",
+    action: "試看郵政法規 demo",
+    accent: "cyan",
   },
 ];
 
-const workflow = [
-  { title: "\u9078\u64c7\u984c\u578b", text: "\u5148\u9078\u6c11\u6cd5\u6216\u82f1\u6587\u7df4\u7fd2\uff0c\u4f9d\u7cfb\u7d71\u984c\u76ee\u9032\u884c\u4f5c\u7b54\u3002" },
-  { title: "\u53d6\u5f97\u56de\u994b", text: "\u6c11\u6cd5\u6703\u56de\u994b\u5206\u6578\u3001\u722d\u9ede\u3001\u6db5\u651d\u8207\u4fee\u6b63\u65b9\u5411\uff1b\u82f1\u6587\u63d0\u4f9b\u7b54\u6848\u8207\u4e2d\u6587\u89e3\u6790\u3002" },
-  { title: "\u8ffd\u8e64\u5f31\u9ede", text: "\u767b\u5165\u5f8c\u53ef\u4fdd\u7559\u7df4\u7fd2\u7d00\u9304\uff0c\u4fbf\u65bc\u5f8c\u7e8c\u6aa2\u8996\u5206\u6578\u8207\u5b78\u7fd2\u72c0\u614b\u3002" },
-];
-
 const safeguards = [
-  "\u672a\u555f\u7528\u5e33\u865f\u7121\u6cd5\u4f7f\u7528\u6b63\u5f0f\u7df4\u7fd2\uff0c\u78ba\u4fdd\u7df4\u7fd2\u8cc7\u6e90\u4f9d\u540d\u55ae\u958b\u653e\u3002",
-  "\u6c11\u6cd5\u8207\u82f1\u6587\u5747\u6709\u6bcf\u65e5\u6b21\u6578\u9650\u5236\uff0c\u9069\u5408\u5c0f\u7bc4\u570d\u7a69\u5b9a\u8a66\u7528\u3002",
-  "\u5f8c\u53f0\u53ef\u67e5\u770b\u4f7f\u7528\u8005\u7d00\u9304\u3001\u555f\u7528\u6703\u54e1\u8207\u505c\u7528\u9080\u8acb\u78bc\u3002",
+  "正式功能需登入並通過管理者啟用，避免未授權使用者消耗 API 額度。",
+  "民法、英文與郵政法規分別設有每日使用上限，方便小規模同事測試。",
+  "練習紀錄會保存於資料庫，後台可檢視使用狀態與批改紀錄。",
 ];
 
-const statusItems = ["\u6c11\u6cd5\u6279\u6539 MVP", "\u82f1\u6587\u984c\u76ee\u7df4\u7fd2", "\u5f8c\u53f0\u6b0a\u9650\u63a7\u7ba1"];
+const workflow = [
+  {
+    title: "建立帳號",
+    text: "使用者先註冊登入，尚未啟用前只能查看引導式 demo。",
+  },
+  {
+    title: "管理者啟用",
+    text: "管理者可在後台審核使用者或發放邀請碼，控制誰能使用正式功能。",
+  },
+  {
+    title: "開始練習",
+    text: "正式會員可依每日額度進行民法批改、英文考卷與郵政法規練習。",
+  },
+];
+
+const statusItems = ["民法批改 MVP", "英文考卷練習", "郵政法規題庫", "會員啟用控管"];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#eef6ff] text-slate-950">
+    <main className="min-h-screen overflow-x-hidden bg-[#eef6ff] text-slate-950">
       <header className="border-b border-sky-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-          <Link className="flex items-center gap-3" href="/">
-            <div className="grid size-10 place-items-center rounded-lg bg-sky-600 text-white shadow-sm">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link className="flex min-w-0 items-center gap-3" href="/">
+            <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-sky-600 text-white shadow-sm">
               <Sparkles size={20} />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-bold text-slate-950">AI Exam Coach</p>
-              <p className="text-xs text-slate-500">{text.brandSub}</p>
+              <p className="text-xs text-slate-500">郵局內升考試練習平台</p>
             </div>
           </Link>
 
-          <div className="flex items-center gap-2">
-            <Link className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50" href="/login">
-              {text.login}
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Link
+              className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 sm:flex-none"
+              href="/login"
+            >
+              登入
             </Link>
-            <Link className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" href="/register">
-              {text.register}
+            <Link
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 sm:flex-none"
+              href="/register"
+            >
+              建立帳號
               <ArrowRight size={16} />
             </Link>
           </div>
@@ -102,12 +100,12 @@ export default function HomePage() {
       </header>
 
       <section className="border-b border-sky-100 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center lg:py-10">
-          <div>
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center lg:py-10">
+          <div className="min-w-0">
             <div className="mb-5 flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+              <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
                 <ShieldCheck size={14} />
-                {text.badge}
+                <span>會員啟用後才可使用正式練習</span>
               </div>
               {statusItems.map((item) => (
                 <span className="rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500" key={item}>
@@ -116,34 +114,53 @@ export default function HomePage() {
               ))}
             </div>
 
-            <h1 className="max-w-4xl text-4xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">{text.heroTitle}</h1>
-            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">{text.heroDesc}</p>
+            <h1 className="max-w-4xl text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">
+              郵局內升考試的 AI 練習教練
+            </h1>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+              以民法申論批改、英文完整考卷與郵政法規選擇題為核心，協助考生在有限時間內反覆練習、檢查弱點，並留下可追蹤的學習紀錄。
+            </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700" href="/demo/law">
-                {text.lawDemo}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+                href="/demo/law"
+              >
+                試看民法 demo
                 <ArrowRight size={16} />
               </Link>
-              <Link className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50" href="/demo/english">
-                {text.englishDemo}
+              <Link
+                className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
+                href="/demo/english"
+              >
+                試看英文 demo
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-md border border-cyan-200 bg-cyan-50 px-5 py-2.5 text-sm font-semibold text-cyan-800 shadow-sm transition hover:bg-cyan-100"
+                href="/demo/postal-rules"
+              >
+                試看郵政法規 demo
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <Metric label={text.lawLimit} value="2 / day" />
-              <Metric label={text.englishLimit} value="1 paper / day" />
-              <Metric label={text.controlledUse} value="Admin unlock" />
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Metric label="民法練習" value="2 / day" />
+              <Metric label="英文考卷" value="1 paper / day" />
+              <Metric label="郵政法規" value="1 set / day" />
+              <Metric label="使用權限" value="Admin unlock" />
             </div>
           </div>
 
           <div className="rounded-lg border border-sky-100 bg-white p-5 shadow-[0_18px_45px_rgba(14,116,144,0.10)]">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="grid size-11 place-items-center rounded-lg bg-sky-600 text-white">
+            <div className="mb-4 flex items-start gap-3">
+              <div className="grid size-11 shrink-0 place-items-center rounded-lg bg-sky-600 text-white">
                 <LockKeyhole size={21} />
               </div>
-              <div>
-                <h2 className="font-semibold text-slate-950">{text.controlTitle}</h2>
-                <p className="text-sm text-slate-500">{text.controlDesc}</p>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-slate-950">小規模試用控管</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  適合先給同事測試：先註冊，再由管理者啟用正式功能，避免公開連結造成額外使用成本。
+                </p>
               </div>
             </div>
 
@@ -159,9 +176,9 @@ export default function HomePage() {
             <div className="mt-5 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
               <div className="mb-1 flex items-center gap-2 font-semibold">
                 <KeyRound size={16} />
-                {text.adminControl}
+                管理者控制
               </div>
-              {text.adminControlDesc}
+              可由後台檢視使用者、邀請碼、練習紀錄與啟用狀態，方便掌握測試期間的使用情況。
             </div>
           </div>
         </div>
@@ -170,31 +187,42 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10">
         <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{text.moduleEyebrow}</p>
-            <h2 className="mt-1 text-2xl font-bold text-slate-950">{text.moduleTitle}</h2>
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">Practice Modules</p>
+            <h2 className="mt-1 text-2xl font-bold text-slate-950">三個練習模組</h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-slate-600">{text.moduleDesc}</p>
+          <p className="max-w-xl text-sm leading-6 text-slate-600">
+            首頁 demo 用來讓使用者理解流程；正式練習則需登入並啟用會員資格。
+          </p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-3">
           {practiceEntries.map((entry) => {
+            const Icon = entry.icon;
             const isLaw = entry.accent === "sky";
+            const isPostal = entry.accent === "cyan";
+            const tone = isLaw ? "text-sky-700 bg-sky-50" : isPostal ? "text-cyan-700 bg-cyan-50" : "text-indigo-700 bg-indigo-50";
+            const linkTone = isLaw ? "text-sky-700 group-hover:text-sky-800" : isPostal ? "text-cyan-700 group-hover:text-cyan-800" : "text-indigo-700 group-hover:text-indigo-800";
+
             return (
-              <Link className="group rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href={entry.href} key={entry.title}>
+              <Link
+                className="group flex min-h-[210px] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                href={entry.href}
+                key={entry.title}
+              >
                 <div className="flex items-start justify-between gap-4">
-                  <div className={`grid size-12 place-items-center rounded-lg ${isLaw ? "bg-sky-50 text-sky-700" : "bg-indigo-50 text-indigo-700"}`}>
-                    <entry.icon size={22} />
+                  <div className={`grid size-12 place-items-center rounded-lg ${tone}`}>
+                    <Icon size={22} />
                   </div>
-                  <ArrowRight className={`text-slate-300 transition ${isLaw ? "group-hover:text-sky-700" : "group-hover:text-indigo-700"}`} size={20} />
+                  <ArrowRight className={`text-slate-300 transition ${linkTone}`} size={20} />
                 </div>
                 <h3 className="mt-4 text-xl font-bold text-slate-950">{entry.title}</h3>
-                <p className="mt-2 min-h-16 text-sm leading-6 text-slate-600">{entry.description}</p>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="mt-2 text-sm leading-6 text-slate-600">{entry.description}</p>
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                   <span className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
                     <TimerReset size={14} />
                     {entry.meta}
                   </span>
-                  <span className={`inline-flex items-center gap-2 text-sm font-semibold ${isLaw ? "text-sky-700" : "text-indigo-700"}`}>
+                  <span className={`inline-flex items-center gap-2 text-sm font-semibold ${linkTone}`}>
                     {entry.action}
                     <ArrowRight size={15} />
                   </span>
@@ -212,8 +240,8 @@ export default function HomePage() {
               <FileText size={20} />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{text.workflowEyebrow}</p>
-              <h2 className="text-2xl font-bold text-slate-950">{text.workflowTitle}</h2>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Workflow</p>
+              <h2 className="text-2xl font-bold text-slate-950">從啟用到練習</h2>
             </div>
           </div>
 
@@ -231,10 +259,10 @@ export default function HomePage() {
 
       <footer className="bg-slate-900 text-slate-300">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <p>{text.footer}</p>
+          <p>© 2026 AI Exam Coach. All rights reserved.</p>
           <div className="flex items-center gap-2 text-slate-300">
             <TimerReset size={15} />
-            {text.footerDesc}
+            Made by KK.
           </div>
         </div>
       </footer>
@@ -244,9 +272,9 @@ export default function HomePage() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <p className="text-xs font-semibold text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-slate-950">{value}</p>
+    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <p className="truncate text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-bold text-slate-950 sm:text-xl">{value}</p>
     </div>
   );
 }

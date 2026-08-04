@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AuthGuard } from "@/components/AuthGuard";
 import { apiFetch } from "@/lib/clientApi";
@@ -16,51 +16,50 @@ type DashboardData = {
 };
 
 const englishTypeLabels: Record<string, string> = {
-  vocabulary: "\u55ae\u5b57",
-  grammar: "\u6587\u6cd5",
-  reading: "\u95b1\u8b80",
-  cloze: "\u514b\u6f0f\u5b57",
-  translation: "\u7ffb\u8b6f",
-  writing: "\u5beb\u4f5c",
+  vocabulary: "單字",
+  grammar: "文法",
+  reading: "閱讀",
+  cloze: "克漏字",
+  translation: "翻譯",
+  writing: "寫作",
+  full_exam: "完整試卷",
 };
 
 const levelLabels: Record<string, string> = {
-  basic: "\u57fa\u790e",
-  intermediate: "\u4e2d\u7b49",
-  advanced: "\u9032\u968e",
+  basic: "基礎",
+  intermediate: "中等",
+  advanced: "進階",
 };
 
 const text = {
-  loading: "\u8f09\u5165 Dashboard...",
-  badge: "\u5b78\u7fd2\u5100\u8868\u677f",
-  hello: "\u4f60\u597d",
-  usagePrefix: "\u4eca\u65e5\u5df2\u4f7f\u7528",
-  usageSuffix: "\u6b21\uff0c\u9084\u53ef\u4f7f\u7528",
-  times: "\u6b21\u3002",
-  unlockTitle: "\u555f\u7528\u6b63\u5f0f\u6703\u54e1",
-  unlockDesc:
-    "\u76ee\u524d\u5e33\u865f\u5c1a\u672a\u555f\u7528\u6b63\u5f0f\u7df4\u7fd2\u529f\u80fd\u3002\u8acb\u8f38\u5165\u7ba1\u7406\u8005\u63d0\u4f9b\u7684\u9080\u8acb\u78bc\uff1b\u672a\u555f\u7528\u524d\u7121\u6cd5\u547c\u53eb\u6c11\u6cd5\u6279\u6539\u8207\u82f1\u6587\u8003\u5377 API\u3002",
-  unlockPlaceholder: "\u8acb\u8f38\u5165\u9080\u8acb\u78bc",
-  unlockButton: "\u555f\u7528\u6703\u54e1",
-  unlocking: "\u555f\u7528\u4e2d...",
-  unlockSuccess: "\u6b63\u5f0f\u6703\u54e1\u5df2\u555f\u7528\uff0c\u53ef\u4ee5\u958b\u59cb\u4f7f\u7528\u6c11\u6cd5\u6279\u6539\u8207\u82f1\u6587\u8003\u5377\u3002",
-  unlockFailed: "\u555f\u7528\u5931\u6557\u3002",
-  memberActive: "\u6b63\u5f0f\u6703\u54e1\u5df2\u555f\u7528",
-  memberActiveDesc: "\u4f60\u53ef\u4ee5\u958b\u59cb\u4f7f\u7528\u6b63\u5f0f\u6c11\u6cd5\u6279\u6539\u8207\u82f1\u6587\u8003\u5377\u3002",
-  avgLaw: "\u6c11\u6cd5\u5e73\u5747\u5206\u6578",
-  lawPractice: "\u6c11\u6cd5\u7533\u8ad6\u6279\u6539",
-  startLaw: "\u958b\u59cb\u6c11\u6cd5\u7df4\u7fd2",
-  englishPractice: "\u82f1\u6587\u8003\u5377\u7df4\u7fd2",
-  startEnglish: "\u958b\u59cb\u82f1\u6587\u7df4\u7fd2",
-  recentLaw: "\u6700\u8fd1\u6c11\u6cd5\u7df4\u7fd2",
-  recentEnglish: "\u6700\u8fd1\u82f1\u6587\u7df4\u7fd2",
-  score: "\u5206\u6578",
-  noLaw: "\u76ee\u524d\u9084\u6c92\u6709\u6c11\u6cd5\u7df4\u7fd2\u7d00\u9304\u3002",
-  noEnglish: "\u76ee\u524d\u9084\u6c92\u6709\u82f1\u6587\u7df4\u7fd2\u7d00\u9304\u3002",
-  result: "\u7d50\u679c",
-  notSubmitted: "\u672a\u4f5c\u7b54",
-  correct: "\u7b54\u5c0d",
-  wrong: "\u7b54\u932f",
+  loading: "載入 Dashboard...",
+  badge: "學習儀表板",
+  hello: "你好",
+  unlockTitle: "啟用正式會員",
+  unlockDesc: "目前帳號尚未啟用正式練習功能。請輸入管理者提供的邀請碼；未啟用前無法呼叫民法批改、英文試卷與郵政法規正式練習 API。",
+  unlockPlaceholder: "請輸入邀請碼",
+  unlockButton: "啟用會員",
+  unlocking: "啟用中...",
+  unlockSuccess: "正式會員已啟用，可以開始使用正式練習。",
+  unlockFailed: "啟用失敗。",
+  memberActive: "正式會員已啟用",
+  memberActiveDesc: "你可以開始使用民法批改、英文試卷與郵政法規練習。",
+  avgLaw: "民法平均分數",
+  lawPractice: "民法申論批改",
+  startLaw: "開始民法練習",
+  englishPractice: "英文考卷練習",
+  startEnglish: "開始英文練習",
+  postalPractice: "郵政法規練習",
+  startPostal: "開始郵政法規練習",
+  recentLaw: "最近民法練習",
+  recentEnglish: "最近英文練習",
+  score: "分數",
+  noLaw: "目前還沒有民法練習紀錄。",
+  noEnglish: "目前還沒有英文練習紀錄。",
+  result: "結果",
+  notSubmitted: "未作答",
+  correct: "答對",
+  wrong: "答錯",
 };
 
 export default function DashboardPage() {
@@ -112,11 +111,6 @@ function Dashboard({ session }: { session: Parameters<typeof apiFetch>[0] }) {
     }
   }
 
-  const remainingUsage = useMemo(() => {
-    if (!data) return 0;
-    return Math.max(data.dailyLimit - data.todayUsage, 0);
-  }, [data]);
-
   if (error) return <div className="panel text-red-600">{error}</div>;
   if (!data) return <div className="panel">{text.loading}</div>;
 
@@ -128,9 +122,6 @@ function Dashboard({ session }: { session: Parameters<typeof apiFetch>[0] }) {
           {text.hello}
           {data.profile.display_name ? `，${data.profile.display_name}` : ""}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
-          {text.usagePrefix} {data.todayUsage} {text.usageSuffix} {remainingUsage} {text.times}
-        </p>
       </section>
 
       {data.profile.role !== "admin" && data.profile.plan !== "member" ? (
@@ -138,13 +129,7 @@ function Dashboard({ session }: { session: Parameters<typeof apiFetch>[0] }) {
           <h2 className="font-semibold text-slate-950">{text.unlockTitle}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{text.unlockDesc}</p>
           <form className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={unlockMembership}>
-            <input
-              className="field"
-              placeholder={text.unlockPlaceholder}
-              type="password"
-              value={unlockCode}
-              onChange={(event) => setUnlockCode(event.target.value)}
-            />
+            <input className="field" placeholder={text.unlockPlaceholder} type="password" value={unlockCode} onChange={(event) => setUnlockCode(event.target.value)} />
             <button className="btn-primary" disabled={unlocking || !unlockCode.trim()} type="submit">
               {unlocking ? text.unlocking : text.unlockButton}
             </button>
@@ -158,23 +143,14 @@ function Dashboard({ session }: { session: Parameters<typeof apiFetch>[0] }) {
         </section>
       )}
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="panel">
           <p className="text-sm text-slate-500">{text.avgLaw}</p>
           <p className="mt-2 text-3xl font-bold text-slate-950">{data.averageLawScore ?? "-"}</p>
         </div>
-        <div className="panel">
-          <p className="text-sm text-slate-500">{text.lawPractice}</p>
-          <Link className="btn-primary mt-4 w-full" href="/law">
-            {text.startLaw}
-          </Link>
-        </div>
-        <div className="panel">
-          <p className="text-sm text-slate-500">{text.englishPractice}</p>
-          <Link className="btn-primary mt-4 w-full" href="/english">
-            {text.startEnglish}
-          </Link>
-        </div>
+        <PracticeCard label={text.lawPractice} href="/law" action={text.startLaw} />
+        <PracticeCard label={text.englishPractice} href="/english" action={text.startEnglish} />
+        <PracticeCard label={text.postalPractice} href="/postal-rules" action={text.startPostal} />
       </section>
 
       <section className="grid gap-5 lg:grid-cols-2">
@@ -215,6 +191,17 @@ function Dashboard({ session }: { session: Parameters<typeof apiFetch>[0] }) {
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function PracticeCard({ label, href, action }: { label: string; href: string; action: string }) {
+  return (
+    <div className="panel">
+      <p className="text-sm text-slate-500">{label}</p>
+      <Link className="btn-primary mt-4 w-full" href={href}>
+        {action}
+      </Link>
     </div>
   );
 }

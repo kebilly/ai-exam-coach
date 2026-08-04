@@ -16,15 +16,15 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "請上傳圖片檔。" }, { status: 400 });
+      return NextResponse.json({ error: "請上傳圖片檔案。" }, { status: 400 });
     }
 
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "目前只支援圖片檔。" }, { status: 400 });
+      return NextResponse.json({ error: "只支援圖片檔案。" }, { status: 400 });
     }
 
     if (file.size > 8 * 1024 * 1024) {
-      return NextResponse.json({ error: "圖片請小於 8MB。" }, { status: 400 });
+      return NextResponse.json({ error: "圖片大小不得超過 8MB。" }, { status: 400 });
     }
 
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -37,21 +37,13 @@ export async function POST(request: Request) {
         {
           role: "system",
           content:
-            "你是考試答案 OCR 助手。請辨識圖片中的手寫或印刷中文作答內容，只輸出辨識後的答案文字。不要批改、不要補充說明、不要加入圖片中不存在的內容。若看不清楚，請保留可辨識內容並用「[不清楚]」標記。",
+            "你是民法申論答案 OCR 助手。請忠實辨識圖片中的手寫或印刷文字，只輸出可讀文字。不要批改、不要補寫、不要猜測不存在的內容；無法辨識處請以「[無法辨識]」標記。",
         },
         {
           role: "user",
           content: [
-            {
-              type: "text",
-              text: "請將這張圖片中的民法申論答案轉成可批改的純文字。",
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: dataUrl,
-              },
-            },
+            { type: "text", text: "請辨識這張民法申論答案圖片中的文字，保留段落與標號。" },
+            { type: "image_url", image_url: { url: dataUrl } },
           ],
         },
       ],
@@ -60,9 +52,6 @@ export async function POST(request: Request) {
     const text = completion.choices[0]?.message?.content?.trim() ?? "";
     return NextResponse.json({ text });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "圖片辨識失敗。" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: error instanceof Error ? error.message : "OCR failed" }, { status: 500 });
   }
 }

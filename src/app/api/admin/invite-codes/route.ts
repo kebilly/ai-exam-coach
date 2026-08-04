@@ -1,12 +1,12 @@
 import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { getAuthedUser, getUserRole } from "@/lib/api/auth";
-import { assertServerEnv } from "@/lib/env";
+import { assertSupabaseEnv } from "@/lib/env";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    assertServerEnv();
+    assertSupabaseEnv();
     const { user, error } = await getAuthedUser(request);
     if (error) return error;
 
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    assertServerEnv();
+    assertSupabaseEnv();
     const { user, error } = await getAuthedUser(request);
     if (error) return error;
 

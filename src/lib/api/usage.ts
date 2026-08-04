@@ -46,6 +46,7 @@ function getLimitForAction(actionType?: string) {
   if (actionType === "law_grade") return env.lawDailyLimit;
   if (actionType === "law_ocr") return env.lawOcrDailyLimit;
   if (actionType === "english_generate") return env.englishDailyLimit;
+  if (actionType === "postal_rules_exam") return env.postalRulesDailyLimit;
   return env.dailyUsageLimit;
 }
 

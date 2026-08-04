@@ -7,6 +7,7 @@ export const env = {
   lawDailyLimit: Number(process.env.LAW_DAILY_LIMIT ?? "2"),
   lawOcrDailyLimit: Number(process.env.LAW_OCR_DAILY_LIMIT ?? "3"),
   englishDailyLimit: Number(process.env.ENGLISH_DAILY_LIMIT ?? "1"),
+  postalRulesDailyLimit: Number(process.env.POSTAL_RULES_DAILY_LIMIT ?? "1"),
   memberUnlockCode: process.env.MEMBER_UNLOCK_CODE ?? "",
   unlockAttemptDailyLimit: Number(process.env.UNLOCK_ATTEMPT_DAILY_LIMIT ?? "10"),
   demoApiEnabled: process.env.DEMO_API_ENABLED === "true" || process.env.NODE_ENV !== "production",
@@ -20,5 +21,21 @@ export function assertServerEnv() {
   if (!env.openAiApiKey) missing.push("OPENAI_API_KEY");
   if (missing.length) {
     throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+  }
+}
+
+export function assertSupabaseEnv() {
+  const missing = [];
+  if (!env.supabaseUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  if (!env.supabaseAnonKey) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (!env.supabaseServiceRoleKey) missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  if (missing.length) {
+    throw new Error(`Missing Supabase environment variables: ${missing.join(", ")}`);
+  }
+}
+
+export function assertOpenAiEnv() {
+  if (!env.openAiApiKey) {
+    throw new Error("Missing environment variable: OPENAI_API_KEY");
   }
 }

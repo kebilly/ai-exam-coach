@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthedUser, getUserRole } from "@/lib/api/auth";
-import { assertServerEnv } from "@/lib/env";
+import { assertSupabaseEnv } from "@/lib/env";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 const allowedRoles = new Set(["user", "admin"]);
@@ -8,7 +8,7 @@ const allowedPlans = new Set(["free", "member"]);
 
 export async function PATCH(request: Request) {
   try {
-    assertServerEnv();
+    assertSupabaseEnv();
     const { user, error } = await getAuthedUser(request);
     if (error) return error;
 

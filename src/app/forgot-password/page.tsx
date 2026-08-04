@@ -1,29 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { isSupabaseBrowserConfigured, supabaseBrowser } from "@/lib/supabase/browser";
 
 const text = {
-  title: "登入",
-  desc: "登入 AI Exam Coach Beta，查看練習紀錄與正式會員功能。",
-  password: "密碼",
-  login: "登入",
-  loggingIn: "登入中...",
-  noAccount: "還沒有帳號？",
-  register: "建立帳號",
-  forgotPassword: "忘記密碼？",
-  backHome: "返回首頁",
+  title: "忘記密碼",
+  desc: "輸入註冊信箱後，系統會寄送密碼重設連結。請從信件中的連結回到網站設定新密碼。",
+  email: "Email",
+  send: "寄送重設信",
+  sending: "寄送中...",
+  sent: "如果此信箱已註冊，系統會寄出密碼重設信。請檢查收件匣與垃圾信件。",
+  backLogin: "回登入頁",
   missingSupabase:
     "尚未設定 Supabase 連線。請在 .env.local 填入 NEXT_PUBLIC_SUPABASE_URL 與 NEXT_PUBLIC_SUPABASE_ANON_KEY，並重新啟動 npm run dev。",
-  failed: "無法連線 Supabase Auth。請確認 Supabase URL / anon key 是否正確，或是本機 CA / CORS 設定。",
+  failed: "無法寄送重設信，請確認 Supabase Auth 與 Redirect URL 設定。",
 };
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +27,7 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setMessage("");
 
     if (!isSupabaseBrowserConfigured) {
       setLoading(false);
@@ -39,13 +36,14 @@ export default function LoginPage() {
     }
 
     try {
-      const { error: signInError } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const { error: resetError } = await supabaseBrowser.auth.resetPasswordForEmail(email, { redirectTo });
       setLoading(false);
-      if (signInError) {
-        setError(signInError.message);
+      if (resetError) {
+        setError(resetError.message);
         return;
       }
-      router.push("/dashboard");
+      setMessage(text.sent);
     } catch {
       setLoading(false);
       setError(text.failed);
@@ -59,37 +57,20 @@ export default function LoginPage() {
         <p className="mt-2 text-sm leading-6 text-slate-600">{text.desc}</p>
 
         <label className="mt-6 block text-sm font-medium text-slate-700">
-          Email
+          {text.email}
           <input className="field mt-2" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </label>
 
-        <label className="mt-4 block text-sm font-medium text-slate-700">
-          {text.password}
-          <input className="field mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        </label>
-
+        {message ? <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm leading-6 text-green-700">{message}</p> : null}
         {error ? <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm leading-6 text-red-700">{error}</p> : null}
 
         <button className="btn-primary mt-6 w-full" disabled={loading} type="submit">
-          {loading ? text.loggingIn : text.login}
+          {loading ? text.sending : text.send}
         </button>
 
-        <p className="mt-3 text-center text-sm">
-          <Link className="font-semibold text-blue-700" href="/forgot-password">
-            {text.forgotPassword}
-          </Link>
-        </p>
-
-        <p className="mt-4 text-center text-sm text-slate-600">
-          {text.noAccount}{" "}
-          <Link className="font-semibold text-blue-700" href="/register">
-            {text.register}
-          </Link>
-        </p>
-
-        <p className="mt-3 text-center text-sm">
-          <Link className="font-semibold text-slate-600 hover:text-blue-700" href="/">
-            {text.backHome}
+        <p className="mt-4 text-center text-sm">
+          <Link className="font-semibold text-blue-700" href="/login">
+            {text.backLogin}
           </Link>
         </p>
       </form>
