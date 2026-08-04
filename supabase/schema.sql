@@ -117,7 +117,7 @@ create policy "Users can read own usage logs"
 
 create policy "Users can read approved postal questions"
   on public.postal_rule_questions for select
-  using (review_status = 'approved');
+  using (review_status in ('approved', 'auto_reviewed'));
 
 create policy "Users can read own postal attempts"
   on public.postal_rule_attempts for select

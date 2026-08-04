@@ -5,7 +5,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import type { PostalRulesExam } from "@/types";
 
 const unavailableTableCodes = ["42P01", "42501", "PGRST205"];
-const setupRequiredMessage = "郵政法規資料表尚未建立。請先到 Supabase SQL Editor 執行更新後的 supabase/schema.sql 與 supabase/security-hardening.sql。";
+const setupRequiredMessage = "郵政法規資料表尚未建立，請先在 Supabase SQL Editor 執行 schema/security SQL。";
 
 export async function POST(request: Request) {
   try {

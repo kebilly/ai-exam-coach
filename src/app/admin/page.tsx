@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AuthGuard } from "@/components/AuthGuard";
 import { apiFetch } from "@/lib/clientApi";
+import type { PostalQuestionReviewStatus } from "@/types";
 
 type AdminData = {
   users: AdminUser[];
@@ -86,79 +87,13 @@ type PostalRuleQuestion = {
   source_articles: { law_name: string; article_no: string; note: string }[];
   tags: string[];
   source_type: string;
-  review_status: "pending" | "approved" | "rejected" | "needs_edit" | string;
+  review_status: PostalQuestionReviewStatus | string;
   created_at: string;
 };
 
 type RecordRow = {
   cells: string[];
   action?: React.ReactNode;
-};
-
-const t = {
-  title: "管理後台",
-  subtitle: "管理會員啟用、邀請碼、練習紀錄與郵政法規題庫。",
-  loading: "載入後台資料中...",
-  users: "會員管理",
-  inviteCodes: "邀請碼管理",
-  inviteDesc: "邀請碼預設只能使用一次，適合分發給少量同事測試。",
-  generatedCodes: "新產生的邀請碼",
-  generatedHint: "邀請碼明碼只會在這裡顯示一次，請立刻記錄或分發給使用者。",
-  lawRecords: "民法批改紀錄",
-  englishRecords: "英文練習紀錄",
-  postalRecords: "郵政法規練習紀錄",
-  usageRecords: "AI 使用紀錄",
-  postalRules: "郵政法規題庫審核",
-  postalRulesDesc: "可產生郵政法規練習題，審核通過後才會進入正式練習。",
-  generateSeedPostal: "產生種子題",
-  generateAiPostal: "AI 產生題目",
-  approve: "通過",
-  reject: "退回",
-  needsEdit: "需修改",
-  setupWarning:
-    "郵政法規資料表尚未建立。請先到 Supabase SQL Editor 執行更新後的 supabase/schema.sql 與 supabase/security-hardening.sql。",
-  userSummary: "使用者摘要",
-  filterAll: "全部使用者",
-  filterLabel: "篩選使用者",
-  empty: "目前沒有資料",
-  correct: "答對",
-  wrong: "答錯",
-  notSubmitted: "未作答",
-  generate: "產生邀請碼",
-  generating: "產生中...",
-  activate: "啟用會員",
-  deactivate: "改為免費",
-  makeAdmin: "設為 Admin",
-  makeUser: "改為 User",
-  enableCode: "啟用",
-  disableCode: "停用",
-  saved: "已更新",
-  deleteRecord: "刪除",
-  deleteConfirm: "確定要刪除這筆紀錄嗎？此操作無法復原。",
-  unknownUser: "未知使用者",
-  displayName: "顯示名稱",
-  createdAt: "建立時間",
-  registeredAt: "註冊時間",
-  action: "操作",
-  status: "狀態",
-  usageCount: "使用次數",
-  user: "使用者",
-  score: "分數",
-  question: "題目",
-  time: "時間",
-  type: "題型",
-  result: "結果",
-  event: "動作",
-  lawCount: "民法次數",
-  englishCount: "英文次數",
-  postalCount: "郵政法規次數",
-  aiCount: "AI 次數",
-  count: "數量",
-  label: "標籤",
-  careerLevel: "職階",
-  lawArea: "法規類別",
-  answer: "答案",
-  explanation: "解析",
 };
 
 const careerLevelOptions = [
@@ -195,7 +130,7 @@ function Admin({ session }: { session: Session }) {
   const [postalSetupRequired, setPostalSetupRequired] = useState(false);
   const [postalCareerLevel, setPostalCareerLevel] = useState("professional_2_to_1");
   const [postalLawArea, setPostalLawArea] = useState("郵政法");
-  const [postalCount, setPostalCount] = useState(5);
+  const [postalCount, setPostalCount] = useState(10);
 
   async function reload() {
     setError("");
@@ -226,7 +161,7 @@ function Admin({ session }: { session: Session }) {
         method: "PATCH",
         body: JSON.stringify({ user_id: userId, ...patch }),
       });
-      setMessage(t.saved);
+      setMessage("已更新使用者。");
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "User update failed");
@@ -247,7 +182,7 @@ function Admin({ session }: { session: Session }) {
         body: JSON.stringify({ count: inviteCount, label: inviteLabel }),
       });
       setGeneratedCodes(result.codes);
-      setMessage(`已產生 ${result.codes.length} 組邀請碼`);
+      setMessage(`已產生 ${result.codes.length} 組邀請碼。`);
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invite code generation failed");
@@ -265,7 +200,7 @@ function Admin({ session }: { session: Session }) {
         method: "PATCH",
         body: JSON.stringify({ id, active }),
       });
-      setMessage(t.saved);
+      setMessage("已更新邀請碼。");
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invite code update failed");
@@ -289,7 +224,9 @@ function Admin({ session }: { session: Session }) {
           law_area: postalLawArea,
         }),
       });
-      setMessage(`已產生 ${result.questions.length} 題郵政法規題目`);
+      const autoReviewed = result.questions.filter((item) => item.review_status === "auto_reviewed").length;
+      const needsEdit = result.questions.filter((item) => item.review_status === "needs_edit").length;
+      setMessage(`已產生 ${result.questions.length} 題。自動通過 ${autoReviewed} 題，需人工處理 ${needsEdit} 題。`);
       await reloadPostalQuestions();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Postal rules generation failed");
@@ -298,7 +235,7 @@ function Admin({ session }: { session: Session }) {
     }
   }
 
-  async function reviewPostalQuestion(id: string, reviewStatus: "approved" | "rejected" | "needs_edit") {
+  async function reviewPostalQuestion(id: string, reviewStatus: PostalQuestionReviewStatus) {
     setBusyId(id);
     setError("");
     setMessage("");
@@ -307,7 +244,7 @@ function Admin({ session }: { session: Session }) {
         method: "PATCH",
         body: JSON.stringify({ id, review_status: reviewStatus }),
       });
-      setMessage(t.saved);
+      setMessage("已更新題目狀態。");
       await reloadPostalQuestions();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Postal rules review failed");
@@ -317,7 +254,7 @@ function Admin({ session }: { session: Session }) {
   }
 
   async function deleteRecord(type: "law" | "english" | "postal" | "usage", id: string) {
-    if (!window.confirm(t.deleteConfirm)) return;
+    if (!window.confirm("確定要刪除這筆紀錄嗎？此動作無法復原。")) return;
     const busyKey = `${type}:${id}`;
     setBusyId(busyKey);
     setError("");
@@ -327,7 +264,7 @@ function Admin({ session }: { session: Session }) {
         method: "DELETE",
         body: JSON.stringify({ type, id }),
       });
-      setMessage(t.saved);
+      setMessage("已刪除紀錄。");
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
@@ -354,24 +291,32 @@ function Admin({ session }: { session: Session }) {
       lawCount: data.law.filter((item) => item.user_id === user.id).length,
       englishCount: data.english.filter((item) => item.user_id === user.id).length,
       postalCount: data.postal.filter((item) => item.user_id === user.id).length,
-      usageCount: data.usage.filter((item) => item.user_id === user.id).length,
     }));
   }, [data]);
 
+  const postalStatusCounts = useMemo(() => {
+    return postalQuestions.reduce<Record<string, number>>((acc, item) => {
+      acc[item.review_status] = (acc[item.review_status] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [postalQuestions]);
+
   if (error && !data) return <div className="panel text-red-600">{error}</div>;
-  if (!data || !filtered) return <div className="panel">{t.loading}</div>;
+  if (!data || !filtered) return <div className="panel">載入管理資料中...</div>;
 
   function userLabel(userId: string) {
     const user = data?.users.find((item) => item.id === userId);
-    if (!user) return `${t.unknownUser} (${userId.slice(0, 8)})`;
+    if (!user) return `未知使用者 (${userId.slice(0, 8)})`;
     return `${user.email}${user.display_name ? ` / ${user.display_name}` : ""}`;
   }
 
   return (
     <div className="space-y-5">
       <section className="panel">
-        <h1 className="text-2xl font-bold text-slate-950">{t.title}</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{t.subtitle}</p>
+        <h1 className="text-2xl font-bold text-slate-950">管理後台</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          管理使用者啟用狀態、邀請碼、練習紀錄與郵政法規題庫。AI 生成題會先經過自動檢查，只有有疑慮的題目才需要人工處理。
+        </p>
         {message ? <p className="mt-3 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p> : null}
         {error ? <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
       </section>
@@ -379,11 +324,11 @@ function Admin({ session }: { session: Session }) {
       <section className="panel">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-semibold text-slate-950">{t.userSummary}</h2>
-            <p className="mt-1 text-sm text-slate-500">{t.filterLabel}</p>
+            <h2 className="font-semibold text-slate-950">使用者總覽</h2>
+            <p className="mt-1 text-sm text-slate-500">可依使用者篩選下方紀錄。</p>
           </div>
           <select className="field max-w-sm" value={selectedUserId} onChange={(event) => setSelectedUserId(event.target.value)}>
-            <option value="all">{t.filterAll}</option>
+            <option value="all">全部使用者</option>
             {data.users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.email}
@@ -392,28 +337,28 @@ function Admin({ session }: { session: Session }) {
           </select>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <StatCard label={t.lawCount} value={filtered.law.length} />
-          <StatCard label={t.englishCount} value={filtered.english.length} />
-          <StatCard label={t.postalCount} value={filtered.postal.length} />
-          <StatCard label={t.aiCount} value={filtered.usage.length} />
+          <StatCard label="民法紀錄" value={filtered.law.length} />
+          <StatCard label="英文紀錄" value={filtered.english.length} />
+          <StatCard label="郵政法規紀錄" value={filtered.postal.length} />
+          <StatCard label="AI 使用紀錄" value={filtered.usage.length} />
         </div>
       </section>
 
       <section className="panel">
-        <h2 className="font-semibold text-slate-950">{t.users}</h2>
+        <h2 className="font-semibold text-slate-950">使用者管理</h2>
         <div className="mt-4 overflow-auto">
           <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-2 py-2">Email</th>
-                <th className="px-2 py-2">{t.displayName}</th>
+                <th className="px-2 py-2">顯示名稱</th>
                 <th className="px-2 py-2">Role</th>
                 <th className="px-2 py-2">Plan</th>
-                <th className="px-2 py-2">{t.lawCount}</th>
-                <th className="px-2 py-2">{t.englishCount}</th>
-                <th className="px-2 py-2">{t.postalCount}</th>
-                <th className="px-2 py-2">{t.registeredAt}</th>
-                <th className="px-2 py-2">{t.action}</th>
+                <th className="px-2 py-2">民法</th>
+                <th className="px-2 py-2">英文</th>
+                <th className="px-2 py-2">郵政法規</th>
+                <th className="px-2 py-2">註冊時間</th>
+                <th className="px-2 py-2">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -434,10 +379,10 @@ function Admin({ session }: { session: Session }) {
                   <td className="px-2 py-3">
                     <div className="flex flex-wrap gap-2">
                       <SmallButton disabled={busyId === user.id} onClick={() => updateUser(user.id, { plan: user.plan === "member" ? "free" : "member" })}>
-                        {user.plan === "member" ? t.deactivate : t.activate}
+                        {user.plan === "member" ? "停用會員" : "啟用會員"}
                       </SmallButton>
                       <SmallButton disabled={busyId === user.id} onClick={() => updateUser(user.id, { role: user.role === "admin" ? "user" : "admin" })}>
-                        {user.role === "admin" ? t.makeUser : t.makeAdmin}
+                        {user.role === "admin" ? "改為一般" : "設為 Admin"}
                       </SmallButton>
                     </div>
                   </td>
@@ -451,22 +396,22 @@ function Admin({ session }: { session: Session }) {
       <section className="panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-semibold text-slate-950">{t.inviteCodes}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{t.inviteDesc}</p>
+            <h2 className="font-semibold text-slate-950">邀請碼管理</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">邀請碼可用來讓同事啟用正式會員。建議每批設定清楚 label，方便日後追蹤。</p>
           </div>
           <form className="grid gap-2 sm:grid-cols-[90px_160px_auto]" onSubmit={generateInviteCodes}>
-            <input aria-label={t.count} className="field" max={50} min={1} type="number" value={inviteCount} onChange={(event) => setInviteCount(Number(event.target.value))} />
-            <input aria-label={t.label} className="field" value={inviteLabel} onChange={(event) => setInviteLabel(event.target.value)} />
+            <input aria-label="數量" className="field" max={50} min={1} type="number" value={inviteCount} onChange={(event) => setInviteCount(Number(event.target.value))} />
+            <input aria-label="標籤" className="field" value={inviteLabel} onChange={(event) => setInviteLabel(event.target.value)} />
             <button className="btn-primary" disabled={generating} type="submit">
-              {generating ? t.generating : t.generate}
+              {generating ? "產生中..." : "產生邀請碼"}
             </button>
           </form>
         </div>
 
         {generatedCodes.length ? (
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
-            <h3 className="font-semibold text-amber-950">{t.generatedCodes}</h3>
-            <p className="mt-1 text-sm text-amber-800">{t.generatedHint}</p>
+            <h3 className="font-semibold text-amber-950">新產生的邀請碼</h3>
+            <p className="mt-1 text-sm text-amber-800">請立即複製保存；重新整理後不會再顯示明碼。</p>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {generatedCodes.map((item) => (
                 <div className="rounded-md bg-white px-3 py-2 font-mono text-sm text-slate-800" key={item.code}>
@@ -477,88 +422,63 @@ function Admin({ session }: { session: Session }) {
           </div>
         ) : null}
 
-        <div className="mt-4 overflow-auto">
-          <table className="w-full min-w-[760px] text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
-              <tr>
-                <th className="px-2 py-2">Label</th>
-                <th className="px-2 py-2">{t.status}</th>
-                <th className="px-2 py-2">{t.usageCount}</th>
-                <th className="px-2 py-2">{t.createdAt}</th>
-                <th className="px-2 py-2">{t.action}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.inviteCodes.length ? (
-                data.inviteCodes.map((item) => (
-                  <tr className="border-t border-slate-200" key={item.id}>
-                    <td className="px-2 py-3 text-slate-800">{item.label ?? "-"}</td>
-                    <td className="px-2 py-3">
-                      <StatusBadge tone={item.active ? "green" : "slate"}>{item.active ? "active" : "disabled"}</StatusBadge>
-                    </td>
-                    <td className="px-2 py-3 text-slate-700">
-                      {item.used_count}/{item.max_uses}
-                    </td>
-                    <td className="px-2 py-3 text-slate-600">{formatDate(item.created_at)}</td>
-                    <td className="px-2 py-3">
-                      <SmallButton disabled={busyId === item.id} onClick={() => updateInviteCode(item.id, !item.active)}>
-                        {item.active ? t.disableCode : t.enableCode}
-                      </SmallButton>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <EmptyRow colSpan={5} />
-              )}
-            </tbody>
-          </table>
-        </div>
+        <SimpleTable
+          headers={["Label", "狀態", "使用次數", "建立時間", "操作"]}
+          rows={data.inviteCodes.map((item) => ({
+            cells: [item.label ?? "-", item.active ? "active" : "disabled", `${item.used_count}/${item.max_uses}`, formatDate(item.created_at)],
+            action: (
+              <SmallButton disabled={busyId === item.id} onClick={() => updateInviteCode(item.id, !item.active)}>
+                {item.active ? "停用" : "啟用"}
+              </SmallButton>
+            ),
+          }))}
+        />
       </section>
 
       <RecordTable
-        title={t.lawRecords}
-        headers={[t.user, t.score, t.question, t.time, t.action]}
+        title="民法批改紀錄"
+        headers={["使用者", "分數", "題目", "時間", "操作"]}
         rows={filtered.law.map((item) => ({
           cells: [userLabel(item.user_id), `${item.score ?? "-"} / 100`, item.question.slice(0, 80), formatDate(item.created_at)],
           action: (
             <SmallButton disabled={busyId === `law:${item.id}`} onClick={() => deleteRecord("law", item.id)}>
-              {t.deleteRecord}
+              刪除
             </SmallButton>
           ),
         }))}
       />
       <RecordTable
-        title={t.englishRecords}
-        headers={[t.user, t.type, t.result, t.time, t.action]}
+        title="英文練習紀錄"
+        headers={["使用者", "題型", "結果", "時間", "操作"]}
         rows={filtered.english.map((item) => ({
-          cells: [userLabel(item.user_id), `${item.level}/${item.question_type}`, item.is_correct === null ? t.notSubmitted : item.is_correct ? t.correct : t.wrong, formatDate(item.created_at)],
+          cells: [userLabel(item.user_id), `${item.level}/${item.question_type}`, item.is_correct === null ? "未送出" : item.is_correct ? "答對" : "答錯", formatDate(item.created_at)],
           action: (
             <SmallButton disabled={busyId === `english:${item.id}`} onClick={() => deleteRecord("english", item.id)}>
-              {t.deleteRecord}
+              刪除
             </SmallButton>
           ),
         }))}
       />
       <RecordTable
-        title={t.postalRecords}
-        headers={[t.user, t.careerLevel, t.score, "答對題數", t.time, t.action]}
+        title="郵政法規練習紀錄"
+        headers={["使用者", "職階", "分數", "答對題數", "時間", "操作"]}
         rows={filtered.postal.map((item) => ({
-          cells: [userLabel(item.user_id), item.career_level, `${item.score ?? "-"} / 100`, `${item.correct_count ?? "-"} / ${item.total_questions ?? "-"}`, formatDate(item.created_at)],
+          cells: [userLabel(item.user_id), careerLabel(item.career_level), `${item.score ?? "-"} / 100`, `${item.correct_count ?? "-"} / ${item.total_questions ?? "-"}`, formatDate(item.created_at)],
           action: (
             <SmallButton disabled={busyId === `postal:${item.id}`} onClick={() => deleteRecord("postal", item.id)}>
-              {t.deleteRecord}
+              刪除
             </SmallButton>
           ),
         }))}
       />
       <RecordTable
-        title={t.usageRecords}
-        headers={[t.user, t.event, t.time, t.action]}
+        title="AI 使用紀錄"
+        headers={["使用者", "事件", "時間", "操作"]}
         rows={filtered.usage.map((item) => ({
           cells: [userLabel(item.user_id), item.action_type, formatDate(item.created_at)],
           action: (
             <SmallButton disabled={busyId === `usage:${item.id}`} onClick={() => deleteRecord("usage", item.id)}>
-              {t.deleteRecord}
+              刪除
             </SmallButton>
           ),
         }))}
@@ -567,8 +487,16 @@ function Admin({ session }: { session: Session }) {
       <section className="panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-semibold text-slate-950">{t.postalRules}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{t.postalRulesDesc}</p>
+            <h2 className="font-semibold text-slate-950">郵政法規題庫</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Seed 題會直接通過。AI 題若格式與來源檢查通過，會標為 auto_reviewed 並可進入正式練習；只有 needs_edit 題目需要人工處理。
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <StatusBadge tone="green">approved {postalStatusCounts.approved ?? 0}</StatusBadge>
+              <StatusBadge tone="blue">auto_reviewed {postalStatusCounts.auto_reviewed ?? 0}</StatusBadge>
+              <StatusBadge tone="amber">needs_edit {postalStatusCounts.needs_edit ?? 0}</StatusBadge>
+              <StatusBadge tone="slate">pending {postalStatusCounts.pending ?? 0}</StatusBadge>
+            </div>
           </div>
           <div className="grid gap-2 md:grid-cols-[220px_160px_90px_auto_auto]">
             <select className="field" value={postalCareerLevel} onChange={(event) => setPostalCareerLevel(event.target.value)}>
@@ -587,27 +515,27 @@ function Admin({ session }: { session: Session }) {
             </select>
             <input className="field" max={10} min={1} type="number" value={postalCount} onChange={(event) => setPostalCount(Number(event.target.value))} />
             <button className="btn-secondary" disabled={postalBusy} onClick={() => generatePostalQuestions("seed")} type="button">
-              {t.generateSeedPostal}
+              匯入 seed 題
             </button>
             <button className="btn-primary" disabled={postalBusy} onClick={() => generatePostalQuestions("ai")} type="button">
-              {postalBusy ? "產生中..." : t.generateAiPostal}
+              {postalBusy ? "生成中..." : "AI 生成題"}
             </button>
           </div>
         </div>
 
-        {postalSetupRequired ? <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">{t.setupWarning}</div> : null}
+        {postalSetupRequired ? <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">郵政法規資料表尚未建立，請先在 Supabase SQL Editor 執行 schema/security SQL。</div> : null}
 
         <div className="mt-4 overflow-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
-                <th className="px-2 py-2">{t.status}</th>
-                <th className="px-2 py-2">{t.careerLevel}</th>
-                <th className="px-2 py-2">{t.lawArea}</th>
-                <th className="px-2 py-2">{t.question}</th>
-                <th className="px-2 py-2">{t.answer}</th>
-                <th className="px-2 py-2">{t.explanation}</th>
-                <th className="px-2 py-2">{t.action}</th>
+                <th className="px-2 py-2">狀態</th>
+                <th className="px-2 py-2">職階</th>
+                <th className="px-2 py-2">法規</th>
+                <th className="px-2 py-2">題目</th>
+                <th className="px-2 py-2">答案</th>
+                <th className="px-2 py-2">解析</th>
+                <th className="px-2 py-2">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -615,23 +543,26 @@ function Admin({ session }: { session: Session }) {
                 postalQuestions.map((item) => (
                   <tr className="border-t border-slate-200" key={item.id}>
                     <td className="px-2 py-3">
-                      <StatusBadge tone={item.review_status === "approved" ? "green" : item.review_status === "rejected" ? "slate" : "blue"}>{item.review_status}</StatusBadge>
+                      <StatusBadge tone={statusTone(item.review_status)}>{item.review_status}</StatusBadge>
                     </td>
-                    <td className="px-2 py-3 text-slate-700">{item.career_level}</td>
+                    <td className="px-2 py-3 text-slate-700">{careerLabel(item.career_level)}</td>
                     <td className="px-2 py-3 text-slate-700">{item.law_area}</td>
                     <td className="px-2 py-3 text-slate-800">{item.question}</td>
                     <td className="px-2 py-3 text-slate-700">{item.answer}</td>
-                    <td className="px-2 py-3 text-slate-600">{item.explanation.slice(0, 100)}</td>
+                    <td className="px-2 py-3 text-slate-600">{item.explanation.slice(0, 120)}</td>
                     <td className="px-2 py-3">
                       <div className="flex flex-wrap gap-2">
                         <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "approved")}>
-                          {t.approve}
+                          人工通過
+                        </SmallButton>
+                        <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "auto_reviewed")}>
+                          自動通過
                         </SmallButton>
                         <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "needs_edit")}>
-                          {t.needsEdit}
+                          需修改
                         </SmallButton>
                         <SmallButton disabled={busyId === item.id} onClick={() => reviewPostalQuestion(item.id, "rejected")}>
-                          {t.reject}
+                          停用
                         </SmallButton>
                       </div>
                     </td>
@@ -661,36 +592,42 @@ function RecordTable({ title, headers, rows }: { title: string; headers: string[
   return (
     <section className="panel">
       <h2 className="font-semibold text-slate-950">{title}</h2>
-      <div className="mt-4 overflow-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              {headers.map((header) => (
-                <th className="px-2 py-2" key={`${title}-${header}`}>
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length ? (
-              rows.map((row, index) => (
-                <tr className="border-t border-slate-200" key={`${title}-${index}`}>
-                  {row.cells.map((cell, cellIndex) => (
-                    <td className="px-2 py-3 text-slate-700" key={`${title}-${index}-${cellIndex}`}>
-                      {cell}
-                    </td>
-                  ))}
-                  {row.action ? <td className="px-2 py-3">{row.action}</td> : null}
-                </tr>
-              ))
-            ) : (
-              <EmptyRow colSpan={headers.length} />
-            )}
-          </tbody>
-        </table>
-      </div>
+      <SimpleTable headers={headers} rows={rows} />
     </section>
+  );
+}
+
+function SimpleTable({ headers, rows }: { headers: string[]; rows: RecordRow[] }) {
+  return (
+    <div className="mt-4 overflow-auto">
+      <table className="w-full min-w-[760px] text-left text-sm">
+        <thead className="bg-slate-50 text-slate-500">
+          <tr>
+            {headers.map((header) => (
+              <th className="px-2 py-2" key={header}>
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? (
+            rows.map((row, index) => (
+              <tr className="border-t border-slate-200" key={index}>
+                {row.cells.map((cell, cellIndex) => (
+                  <td className="px-2 py-3 text-slate-700" key={cellIndex}>
+                    {cell}
+                  </td>
+                ))}
+                {row.action ? <td className="px-2 py-3">{row.action}</td> : null}
+              </tr>
+            ))
+          ) : (
+            <EmptyRow colSpan={headers.length} />
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -698,7 +635,7 @@ function EmptyRow({ colSpan }: { colSpan: number }) {
   return (
     <tr>
       <td className="py-3 text-slate-500" colSpan={colSpan}>
-        {t.empty}
+        目前沒有資料
       </td>
     </tr>
   );
@@ -717,14 +654,26 @@ function SmallButton({ children, disabled, onClick }: { children: React.ReactNod
   );
 }
 
-function StatusBadge({ children, tone }: { children: React.ReactNode; tone: "blue" | "green" | "slate" }) {
+function StatusBadge({ children, tone }: { children: React.ReactNode; tone: "blue" | "green" | "slate" | "amber" }) {
   const className = {
     blue: "bg-blue-50 text-blue-700",
     green: "bg-green-50 text-green-700",
     slate: "bg-slate-100 text-slate-600",
+    amber: "bg-amber-50 text-amber-700",
   }[tone];
 
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${className}`}>{children}</span>;
+}
+
+function statusTone(status: string): "blue" | "green" | "slate" | "amber" {
+  if (status === "approved") return "green";
+  if (status === "auto_reviewed") return "blue";
+  if (status === "needs_edit" || status === "pending") return "amber";
+  return "slate";
+}
+
+function careerLabel(value: string) {
+  return careerLevelOptions.find((item) => item.value === value)?.label ?? value;
 }
 
 function formatDate(value: string) {

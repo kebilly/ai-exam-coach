@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { assertOpenAiEnv, assertSupabaseEnv } from "@/lib/env";
 import { getAuthedUser, getUserRole } from "@/lib/api/auth";
 import { createOpenAI, safeJsonParse } from "@/lib/api/openai";
-import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { assertOpenAiEnv, assertSupabaseEnv } from "@/lib/env";
 import {
   buildPostalRulesPrompt,
+  getAutoReviewStatus,
   postalGeneratedQuestionsSchema,
   postalLawAreas,
   postalQuestionFormats,
@@ -14,8 +14,10 @@ import {
   type PostalCareerLevel,
   type PostalLawArea,
   type PostalQuestionFormat,
+  type PostalQuestionReviewStatus,
   type PostalRuleQuestion,
 } from "@/lib/postal-regulations";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 const unavailableTableCodes = ["42P01", "42501", "PGRST205"];
 
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
     if (error) return error;
 
     const supabase = createSupabaseAdmin();
-    const { data, error: fetchError } = await supabase.from("postal_rule_questions").select("*").order("created_at", { ascending: false }).limit(150);
+    const { data, error: fetchError } = await supabase.from("postal_rule_questions").select("*").order("created_at", { ascending: false }).limit(200);
 
     if (fetchError) {
       if (unavailableTableCodes.includes(fetchError.code ?? "")) {
@@ -62,18 +64,21 @@ export async function POST(request: Request) {
 
     let questions: PostalRuleQuestion[];
     if (mode === "seed") {
-      questions = seedPostalQuestions.slice(0, count).map((item) => ({ ...item, review_status: "approved" }));
+      questions = seedPostalQuestions
+        .filter((item) => item.career_level === careerLevel && item.question_format === questionFormat)
+        .slice(0, count)
+        .map((item) => ({ ...item, review_status: "approved" }));
     } else {
       assertOpenAiEnv();
       if (!postalLawAreas.includes(lawArea) || !postalQuestionFormats.some((item) => item.value === questionFormat)) {
-        return NextResponse.json({ error: "Invalid postal rules generation settings" }, { status: 400 });
+        return NextResponse.json({ error: "郵政法規生成設定不正確。" }, { status: 400 });
       }
       const openai = createOpenAI();
       const completion = await openai.chat.completions.create({
         model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-        temperature: 0.4,
+        temperature: 0.35,
         messages: [
-          { role: "system", content: "You generate postal regulation exam questions as strict JSON only." },
+          { role: "system", content: "You generate Traditional Chinese postal regulation exam questions as strict JSON only." },
           { role: "user", content: buildPostalRulesPrompt({ careerLevel, questionFormat, lawArea, count }) },
         ],
       });
@@ -81,17 +86,17 @@ export async function POST(request: Request) {
       const parsed = postalGeneratedQuestionsSchema.parse(safeJsonParse(raw));
       questions = parsed.questions.map((item) => ({
         ...postalRuleQuestionSchema.parse(item),
-        source_type: "ai_generated_pending_review",
-        review_status: "pending",
+        source_type: "ai_generated_reviewed",
       }));
     }
 
     const validated = questions.map((question) => {
       const errors = validatePostalQuestion(question);
+      const reviewStatus = question.source_type === "seed" ? "approved" : getAutoReviewStatus(question);
       return {
         ...question,
-        review_status: errors.length ? "needs_edit" : question.review_status,
-        tags: [...new Set([...(question.tags ?? []), ...(errors.length ? ["needs_review"] : [])])],
+        review_status: reviewStatus,
+        tags: [...new Set([...(question.tags ?? []), ...(errors.length ? ["needs_review"] : ["auto_checked"])])],
       };
     });
 
@@ -100,10 +105,7 @@ export async function POST(request: Request) {
 
     if (insertError) {
       if (unavailableTableCodes.includes(insertError.code ?? "")) {
-        return NextResponse.json(
-          { error: "郵政法規資料表尚未建立。請先到 Supabase SQL Editor 執行更新後的 supabase/schema.sql 與 supabase/security-hardening.sql。" },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: "郵政法規資料表尚未建立，請先在 Supabase SQL Editor 執行 schema/security SQL。" }, { status: 500 });
       }
       throw insertError;
     }
@@ -120,10 +122,10 @@ export async function PATCH(request: Request) {
 
     const body = await request.json().catch(() => ({}));
     const id = String(body.id ?? "").trim();
-    const reviewStatus = String(body.review_status ?? "").trim();
+    const reviewStatus = String(body.review_status ?? "").trim() as PostalQuestionReviewStatus;
 
-    if (!id || !["approved", "rejected", "needs_edit", "pending"].includes(reviewStatus)) {
-      return NextResponse.json({ error: "Invalid review update" }, { status: 400 });
+    if (!id || !["approved", "auto_reviewed", "rejected", "needs_edit", "pending"].includes(reviewStatus)) {
+      return NextResponse.json({ error: "審核狀態不正確。" }, { status: 400 });
     }
 
     const supabase = createSupabaseAdmin();
@@ -132,7 +134,7 @@ export async function PATCH(request: Request) {
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
     };
-    if (reviewStatus === "approved") patch.source_type = "ai_generated_reviewed";
+    if (reviewStatus === "approved" || reviewStatus === "auto_reviewed") patch.source_type = "ai_generated_reviewed";
 
     const { error: updateError } = await supabase.from("postal_rule_questions").update(patch).eq("id", id);
     if (updateError) throw updateError;

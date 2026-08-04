@@ -68,3 +68,11 @@ revoke all on table public.postal_rule_attempts from anon, authenticated;
 
 grant select, insert, update, delete on table public.postal_rule_questions to service_role;
 grant select, insert, update, delete on table public.postal_rule_attempts to service_role;
+
+-- If browser-side reads are ever used for approved postal questions, allow both
+-- manually approved and auto-checked questions. Server routes still use
+-- service_role and do not depend on this policy.
+drop policy if exists "Users can read approved postal questions" on public.postal_rule_questions;
+create policy "Users can read approved postal questions"
+  on public.postal_rule_questions for select
+  using (review_status in ('approved', 'auto_reviewed'));

@@ -96,10 +96,10 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
   return (
     <div className="space-y-5">
       <section className="panel">
-        <p className="text-sm font-semibold text-blue-700">郵局內升考試</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-950">郵政法規概要練習</h1>
+        <p className="text-sm font-semibold text-blue-700">郵政法規概要</p>
+        <h1 className="mt-1 text-2xl font-bold text-slate-950">郵政法規選擇題練習</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          目前先提供選擇題練習。題目來源採後台審核制，只有核准題會出現在正式練習中。
+          系統會從已審核或自動檢查通過的題庫中抽題。若題庫不足，請先由管理後台產生 seed 題或 AI 題。
         </p>
       </section>
 
@@ -188,7 +188,8 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
                       <p className="font-semibold">正確答案：{itemResult.correct_answer}</p>
                       <p className="mt-1">{itemResult.explanation}</p>
                       <p className="mt-2 text-xs opacity-80">
-                        來源：{itemResult.source_articles.map((source) => `${source.law_name} ${source.article_no}`).join("、")}
+                        來源：
+                        {itemResult.source_articles.map((source) => `${source.law_name} ${source.article_no}`).join("、")}
                       </p>
                     </div>
                   ) : null}
@@ -199,10 +200,10 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
 
           {result ? (
             <div className="rounded-md border border-blue-100 bg-blue-50 p-4 text-blue-900">
-              <p className="text-sm font-semibold">本次成績</p>
+              <p className="text-sm font-semibold">練習結果</p>
               <p className="mt-1 text-3xl font-bold">{result.score} 分</p>
               <p className="mt-1 text-sm">
-                答對 {result.correct_count} / {result.total_questions} 題。
+                答對 {result.correct_count} / {result.total_questions} 題
               </p>
             </div>
           ) : null}

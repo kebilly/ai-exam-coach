@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { assertMemberUnlocked, getAuthedUser, ensureProfile } from "@/lib/api/auth";
+import { assertMemberUnlocked, ensureProfile, getAuthedUser } from "@/lib/api/auth";
 import { assertUsageAllowed, logUsage } from "@/lib/api/usage";
-import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { assertServerEnv } from "@/lib/env";
-import { buildPostalEnglishExam } from "@/lib/postal-question-bank";
+import { buildPostalEnglishExam } from "@/lib/postal-english-exam";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     await assertMemberUnlocked(user.id);
     await assertUsageAllowed(user.id, "english_generate");
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const level = String(body.level ?? "postal-ii-to-i");
     const topic = String(body.topic ?? "").trim();
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         topic,
         question_json: exam,
         correct_answer: JSON.stringify(answerKey),
-        explanation: "系統將依整份考卷逐題提供中文解析。",
+        explanation: "完整考卷依題型提供中文解析與參考答案。",
         weakness_tags: ["full_exam"],
       })
       .select("id")

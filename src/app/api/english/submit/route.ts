@@ -1,15 +1,45 @@
 import { NextResponse } from "next/server";
 import { getAuthedUser } from "@/lib/api/auth";
-import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { assertServerEnv } from "@/lib/env";
-import type { EnglishExam } from "@/types";
+import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import type { EnglishExam, EnglishExamItem } from "@/types";
 
 function normalize(value: string) {
-  return value.trim().toLowerCase().replace(/^[a-d]\.\s*/i, "");
+  return value.trim().toLowerCase().replace(/^[a-d]\.\s*/i, "").replace(/\s+/g, " ");
+}
+
+function compact(value: string) {
+  return value.toLowerCase().replace(/[，。；：、,.!?;:\s]/g, "");
 }
 
 function isExam(value: unknown): value is EnglishExam {
   return Boolean(value && typeof value === "object" && (value as EnglishExam).kind === "postal_english_exam" && Array.isArray((value as EnglishExam).items));
+}
+
+function isItemCorrect(item: EnglishExamItem, userAnswer: string) {
+  if (item.answer_type === "choice") return normalize(userAnswer) === normalize(item.correct_answer);
+  return translationSimilarity(userAnswer, item.correct_answer) >= 0.55;
+}
+
+function translationSimilarity(userAnswer: string, correctAnswer: string) {
+  const user = compact(userAnswer);
+  const correct = compact(correctAnswer);
+  if (!user || !correct) return 0;
+  if (user === correct) return 1;
+
+  const chunks = getMeaningfulChunks(correctAnswer);
+  if (!chunks.length) return 0;
+  const matched = chunks.filter((chunk) => user.includes(compact(chunk))).length;
+  return matched / chunks.length;
+}
+
+function getMeaningfulChunks(value: string) {
+  const separators = /[，。；：、,.!?;:]|\band\b|\bor\b|\bto\b|\bthat\b|\bwhich\b|\bwho\b|\bwhen\b|\bif\b/gi;
+  return value
+    .split(separators)
+    .map((item) => item.trim())
+    .filter((item) => compact(item).length >= 4)
+    .slice(0, 8);
 }
 
 export async function POST(request: Request) {
@@ -18,7 +48,7 @@ export async function POST(request: Request) {
     const { user, error } = await getAuthedUser(request);
     if (error) return error;
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const exerciseId = String(body.exercise_id ?? "");
 
     if (!exerciseId) {
@@ -26,12 +56,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = createSupabaseAdmin();
-    const { data: exercise, error: fetchError } = await supabase
-      .from("english_exercises")
-      .select("*")
-      .eq("id", exerciseId)
-      .eq("user_id", user.id)
-      .single();
+    const { data: exercise, error: fetchError } = await supabase.from("english_exercises").select("*").eq("id", exerciseId).eq("user_id", user.id).single();
 
     if (fetchError) throw fetchError;
 
@@ -40,7 +65,7 @@ export async function POST(request: Request) {
       const answers = (body.answers ?? {}) as Record<string, string>;
       const itemResults = exam.items.map((item) => {
         const userAnswer = String(answers[String(item.item_no)] ?? "").trim();
-        const isCorrect = normalize(userAnswer) === normalize(item.correct_answer);
+        const isCorrect = isItemCorrect(item, userAnswer);
         return {
           item_no: item.item_no,
           section: item.section,
@@ -53,7 +78,7 @@ export async function POST(request: Request) {
       });
       const correctCount = itemResults.filter((item) => item.is_correct).length;
       const totalQuestions = exam.items.length;
-      const score = Math.round((correctCount / totalQuestions) * 100);
+      const score = Math.round((correctCount / Math.max(totalQuestions, 1)) * 100);
 
       const { error: updateError } = await supabase
         .from("english_exercises")
@@ -82,11 +107,7 @@ export async function POST(request: Request) {
     }
 
     const isCorrect = normalize(userAnswer) === normalize(exercise.correct_answer ?? "");
-    const { error: updateError } = await supabase
-      .from("english_exercises")
-      .update({ user_answer: userAnswer, is_correct: isCorrect })
-      .eq("id", exerciseId)
-      .eq("user_id", user.id);
+    const { error: updateError } = await supabase.from("english_exercises").update({ user_answer: userAnswer, is_correct: isCorrect }).eq("id", exerciseId).eq("user_id", user.id);
 
     if (updateError) throw updateError;
 

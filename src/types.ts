@@ -71,26 +71,32 @@ export type EnglishExam = {
   items: EnglishExamItem[];
 };
 
+export type PostalCareerLevel = "professional_2_to_1" | "professional_1_to_operations";
+export type PostalQuestionFormat = "single_choice" | "short_answer" | "case_analysis" | "fill_blank";
+export type PostalLawArea = "郵政法" | "郵政儲金匯兌法" | "簡易人壽保險法" | "郵件處理規則" | "郵務營業規章";
+export type PostalQuestionSourceType = "seed" | "ai_generated_pending_review" | "ai_generated_reviewed";
+export type PostalQuestionReviewStatus = "pending" | "auto_reviewed" | "approved" | "rejected" | "needs_edit";
+
 export type PostalRuleQuestion = {
   id?: string;
-  career_level: "professional_2_to_1" | "professional_1_to_operations";
-  question_format: "single_choice" | "short_answer" | "case_analysis" | "fill_blank";
-  law_area: "郵政法" | "郵政儲金匯兌法" | "簡易人壽保險法" | "郵件處理規則" | "郵務營業規章";
+  career_level: PostalCareerLevel;
+  question_format: PostalQuestionFormat;
+  law_area: PostalLawArea;
   difficulty: 1 | 2 | 3;
   question: string;
   options: { A: string; B: string; C: string; D: string } | null;
   answer: string;
   explanation: string;
-  source_articles: { law_name: string; article_no: string; note: string }[];
+  source_articles: { law_name: PostalLawArea; article_no: string; note: string }[];
   tags: string[];
-  source_type: "seed" | "ai_generated_pending_review" | "ai_generated_reviewed";
-  review_status: "pending" | "approved" | "rejected" | "needs_edit";
+  source_type: PostalQuestionSourceType;
+  review_status: PostalQuestionReviewStatus;
 };
 
 export type PostalRulesExam = {
   kind: "postal_rules_exam";
   title: string;
-  career_level: PostalRuleQuestion["career_level"];
+  career_level: PostalCareerLevel;
   total_questions: number;
   total_points: number;
   items: (PostalRuleQuestion & { item_no: number; points: number })[];
