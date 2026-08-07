@@ -94,7 +94,7 @@ export default function EnglishDemoPage() {
             <div className="grid gap-3">
               <DemoField label="Level" value="Postal promotion / intermediate" />
               <DemoField label="Question type" value="Grammar + vocabulary + reading" />
-              <DemoField label="Daily limit" value="1 paper / day after member activation" />
+              <DemoField label="Daily limit" value="2 papers / day after member activation" />
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <button className="btn-primary bg-emerald-600 hover:bg-emerald-700" onClick={replay} type="button">

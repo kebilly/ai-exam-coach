@@ -145,8 +145,8 @@ export default function HomePage() {
 
             <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Metric label="民法練習" value="2 / day" />
-              <Metric label="英文考卷" value="1 paper / day" />
-              <Metric label="郵政法規" value="1 set / day" />
+              <Metric label="英文考卷" value="2 papers / day" />
+              <Metric label="郵政法規" value="2 sets / day" />
               <Metric label="使用權限" value="Admin unlock" />
             </div>
           </div>
