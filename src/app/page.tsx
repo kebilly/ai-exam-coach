@@ -26,7 +26,7 @@ const practiceEntries = [
   {
     title: "英文完整考卷",
     description: "依郵局內升考試方向設計英文練習，包含字彙、文法、克漏字、閱讀與中文解析。",
-    meta: "正式會員每日 1 回",
+    meta: "正式會員每日 2 回",
     icon: BookOpenCheck,
     href: "/demo/english",
     action: "試看英文 demo",
@@ -35,7 +35,7 @@ const practiceEntries = [
   {
     title: "郵政法規選擇題",
     description: "依郵政法、郵儲法、壽險法、郵件處理規則與郵務營業規章建立練習題型。",
-    meta: "正式會員每日 1 回",
+    meta: "正式會員每日 2 回",
     icon: ScrollText,
     href: "/demo/postal-rules",
     action: "試看郵政法規 demo",
