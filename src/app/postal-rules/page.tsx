@@ -181,7 +181,15 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
                         </label>
                       ))}
                     </div>
-                  ) : null}
+                  ) : (
+                    <textarea
+                      className="field mt-3 min-h-28"
+                      placeholder={item.question_format === "fill_blank" ? "請填入答案" : "請輸入簡答或重點關鍵字"}
+                      value={answers[String(item.item_no)] ?? ""}
+                      onChange={(event) => setItemAnswer(item.item_no, event.target.value)}
+                      disabled={Boolean(result)}
+                    />
+                  )}
 
                   {itemResult ? (
                     <div className={`mt-3 rounded-md p-3 text-sm leading-6 ${itemResult.is_correct ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>

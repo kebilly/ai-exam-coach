@@ -33,15 +33,16 @@ export async function POST(request: Request) {
 
     const exam = attempt.exam_json as PostalRulesExam;
     const itemResults = exam.items.map((item) => {
-      const userAnswer = String(answers[String(item.item_no)] ?? "").trim().toUpperCase();
-      const correctAnswer = item.answer.trim().toUpperCase();
+      const rawUserAnswer = String(answers[String(item.item_no)] ?? "").trim();
+      const userAnswer = item.question_format === "single_choice" ? rawUserAnswer.toUpperCase() : rawUserAnswer;
+      const correctAnswer = item.question_format === "single_choice" ? item.answer.trim().toUpperCase() : item.answer.trim();
       return {
         item_no: item.item_no,
         law_area: item.law_area,
         question: item.question,
         user_answer: userAnswer,
         correct_answer: correctAnswer,
-        is_correct: userAnswer === correctAnswer,
+        is_correct: isPostalAnswerCorrect(rawUserAnswer, item.answer, item.question_format),
         explanation: item.explanation,
         source_articles: item.source_articles,
       };
@@ -72,4 +73,29 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Postal rules submit failed" }, { status: 500 });
   }
+}
+
+function isPostalAnswerCorrect(userAnswer: string, expectedAnswer: string, questionFormat: string) {
+  if (questionFormat === "single_choice") return userAnswer.trim().toUpperCase() === expectedAnswer.trim().toUpperCase();
+
+  const normalizedUser = normalizeText(userAnswer);
+  if (!normalizedUser) return false;
+
+  const keywords = expectedAnswer
+    .split(/[;；、,，/]/)
+    .map((item) => normalizeText(item))
+    .filter((item) => item.length >= 2 && !["關鍵字", "答案"].includes(item));
+
+  if (!keywords.length) return normalizedUser.includes(normalizeText(expectedAnswer));
+  if (questionFormat === "fill_blank") return keywords.some((keyword) => normalizedUser.includes(keyword));
+
+  const matched = keywords.filter((keyword) => normalizedUser.includes(keyword)).length;
+  return matched >= Math.ceil(keywords.length * 0.5);
+}
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[，。、「」『』；;：:,.()（）]/g, "");
 }

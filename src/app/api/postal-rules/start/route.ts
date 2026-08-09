@@ -26,20 +26,24 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const careerLevel = String(body.career_level ?? "professional_2_to_1") as PostalCareerLevel;
     const requestedCount = Math.max(5, Math.min(Number(body.count ?? 20), 50));
+    const formats =
+      careerLevel === "professional_1_to_operations"
+        ? ["short_answer", "fill_blank", "case_analysis"]
+        : ["single_choice"];
 
     const supabase = createSupabaseAdmin();
     const { data, error: fetchError } = await supabase
       .from("postal_rule_questions")
       .select("*")
       .eq("career_level", careerLevel)
-      .eq("question_format", "single_choice")
+      .in("question_format", formats)
       .in("review_status", usablePostalReviewStatuses)
       .limit(200);
 
     if (fetchError && !unavailableTableCodes.includes(fetchError.code ?? "")) throw fetchError;
 
-    const approvedOrAutoReviewed = ((data ?? []) as PostalRuleQuestion[]).filter((item) => item.options);
-    const fallback = seedPostalQuestions.filter((item) => item.career_level === careerLevel && item.question_format === "single_choice");
+    const approvedOrAutoReviewed = ((data ?? []) as PostalRuleQuestion[]).filter((item) => formats.includes(item.question_format));
+    const fallback = seedPostalQuestions.filter((item) => item.career_level === careerLevel && formats.includes(item.question_format));
     const pool = uniqueQuestions([...approvedOrAutoReviewed, ...fallback]);
 
     if (pool.length < 5) {

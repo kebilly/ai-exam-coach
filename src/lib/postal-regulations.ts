@@ -128,6 +128,35 @@ function choice(input: {
   };
 }
 
+function textQuestion(input: {
+  id?: string;
+  career_level?: PostalCareerLevel;
+  question_format: "short_answer" | "case_analysis" | "fill_blank";
+  law_area: PostalLawArea;
+  difficulty?: 1 | 2 | 3;
+  question: string;
+  answer: string;
+  explanation: string;
+  article_no?: string;
+  tags?: string[];
+}): PostalRuleQuestion {
+  return {
+    id: input.id,
+    career_level: input.career_level ?? "professional_1_to_operations",
+    question_format: input.question_format,
+    law_area: input.law_area,
+    difficulty: input.difficulty ?? 3,
+    question: input.question,
+    options: null,
+    answer: input.answer,
+    explanation: input.explanation,
+    source_articles: [{ law_name: input.law_area, article_no: input.article_no ?? "依最新法規校對", note: commonSourceNote }],
+    tags: input.tags ?? [input.law_area],
+    source_type: "seed",
+    review_status: "approved",
+  };
+}
+
 const approvedReviewQuestionsV1: PostalRuleQuestion[] = [
   choice({
     law_area: "郵政法",
@@ -1629,6 +1658,199 @@ const approvedPastExamVariantQuestionsV5: PostalRuleQuestion[] = ([
   }),
 );
 
+const approvedOperationsWrittenQuestionsV6: PostalRuleQuestion[] = [
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵政法",
+    difficulty: 3,
+    question: "填充：依郵政法，郵件、郵政資產、郵政款項及郵政公用物，非依法律，不得作為＿＿、＿＿或＿＿之標的。",
+    answer: "檢查；徵收；扣押",
+    explanation: "郵政法第8條重點在保障郵件、郵政資產、郵政款項與郵政公用物，非依法律不得檢查、徵收或扣押。",
+    article_no: "第8條",
+    tags: ["營運職", "填充題", "郵政法"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵政法",
+    difficulty: 3,
+    question: "問答：中華郵政公司或其服務人員，在何種例外情形下得開拆他人郵件？請簡要回答。",
+    answer: "有事實足認內裝為郵政禁寄物品；不能按址投遞；不能退還寄件人；依法處理",
+    explanation: "郵政法第10條原則禁止開拆他人郵件，但有事實足認內裝禁寄物品，或無法投遞且不能退還等依法處理情形時，才可能例外開拆。",
+    article_no: "第10條",
+    tags: ["營運職", "問答題", "郵件秘密"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵政法",
+    difficulty: 3,
+    question: "填充：寄件人或收件人之補償請求權，自郵件交寄之日起，逾＿＿不行使而消滅。",
+    answer: "六個月",
+    explanation: "郵政法第34條規定，補償請求權自郵件交寄日起逾六個月不行使而消滅。",
+    article_no: "第34條",
+    tags: ["營運職", "填充題", "補償", "期間"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵政法",
+    difficulty: 3,
+    question: "問答：誤收他人郵件而故意不返還者，依郵政法可能受到何種行政處罰？",
+    answer: "新臺幣二千元以上一萬元以下罰鍰；故意不返還",
+    explanation: "郵政法第39條規定，誤收他人郵件而故意不返還者，處新臺幣二千元以上一萬元以下罰鍰。",
+    article_no: "第39條",
+    tags: ["營運職", "問答題", "罰鍰"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵務營業規章",
+    difficulty: 3,
+    question: "填充：信函每件重量不得逾＿＿；尺寸最大限制為長、寬、厚各不逾＿＿公分，合計以＿＿公分為限。",
+    answer: "二公斤；六十；九十",
+    explanation: "郵務營業規章第6條規定，信函每件重量不得逾二公斤，長寬厚各不逾六十公分，合計九十公分。",
+    article_no: "第6條",
+    tags: ["營運職", "填充題", "信函", "重量", "尺寸"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵務營業規章",
+    difficulty: 3,
+    question: "問答：印刷物每件重量限制為何？國內互寄單本書籍或寄往國外之書籍得展至多少？",
+    answer: "二公斤；五公斤；書籍",
+    explanation: "郵務營業規章第32條規定，印刷物每件重量限制為二公斤；特定書籍得展至五公斤。",
+    article_no: "第32條",
+    tags: ["營運職", "問答題", "印刷物", "重量"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵務營業規章",
+    difficulty: 3,
+    question: "填充：國內包裹每件重量限制為＿＿公斤，長寬高三邊合計不得大於＿＿公分。",
+    answer: "二十；一百五十",
+    explanation: "郵務營業規章第46條規定，國內包裹每件重量限制二十公斤，長寬高合計不得大於一百五十公分。",
+    article_no: "第46條",
+    tags: ["營運職", "填充題", "包裹", "重量", "尺寸"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵務營業規章",
+    difficulty: 3,
+    question: "問答：存證信函留存郵局之副本，自交寄日起保存多久？期滿後如何處理？",
+    answer: "三年；期滿後銷燬；存證信函副本",
+    explanation: "郵務營業規章關於存證信函副本保存，重點為自交寄日起保存三年，期滿後銷燬。",
+    article_no: "第116條",
+    tags: ["營運職", "問答題", "存證信函"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵件處理規則",
+    difficulty: 3,
+    question: "填充：經按址投遞而無法投交之掛號郵件，招領期間自通知招領之次日起算＿＿，屆期未領者退回寄件人。",
+    answer: "十五日",
+    explanation: "郵件處理規則第50條規定，掛號郵件招領期間自通知招領之次日起算十五日。",
+    article_no: "第50條",
+    tags: ["營運職", "填充題", "掛號郵件", "招領期間"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵件處理規則",
+    difficulty: 3,
+    question: "問答：無法投遞或依規定不予寄遞而不能退還寄件人之郵件，應如何處理？",
+    answer: "原寄郵局招領揭示一個月；逾期無人領取；無著郵件",
+    explanation: "郵件處理規則第58條規定，無法投遞或不能退還之郵件，應由原寄郵局招領揭示一個月，逾期無人領取者為無著郵件。",
+    article_no: "第58條",
+    tags: ["營運職", "問答題", "無法投遞", "無著郵件"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵件處理規則",
+    difficulty: 3,
+    question: "填充：掛號郵件之查詢期限，自交寄之次日起算＿＿。",
+    answer: "六個月",
+    explanation: "郵件處理規則第60條規定，掛號郵件查詢期限自交寄之次日起算六個月。",
+    article_no: "第60條",
+    tags: ["營運職", "填充題", "查詢期限"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵件處理規則",
+    difficulty: 3,
+    question: "問答：國內包裹遺失、被竊或毀損時，依重量區分之補償上限為何？請列出三個級距。",
+    answer: "五公斤以下五百七十五元；超過五公斤至十公斤以下八百六十五元；超過十公斤一千一百五十五元",
+    explanation: "郵件處理規則第65條規定，按重量分為五公斤以下、超過五公斤至十公斤以下、超過十公斤三個補償級距。",
+    article_no: "第65條",
+    tags: ["營運職", "問答題", "補償金額", "包裹"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "簡易人壽保險法",
+    difficulty: 3,
+    question: "填充：以未滿＿＿歲之未成年人為被保險人訂立簡易人壽保險契約，除特定給付外，其餘死亡給付於被保險人滿該歲數時始生效。",
+    answer: "十五",
+    explanation: "簡易人壽保險法第7條重點為未滿十五歲被保險人死亡給付之生效限制。",
+    article_no: "第7條",
+    tags: ["營運職", "填充題", "十五歲", "死亡給付"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "簡易人壽保險法",
+    difficulty: 3,
+    question: "問答：續期保險費自繳費日起一個月未交付時，保險人應如何催告？寬限期間如何計算？",
+    answer: "十日內催告；自當期繳費日起算三個月；寬限期間",
+    explanation: "簡易人壽保險法第13條規定，續期保險費一個月未交付，保險人應於十日內催告，並自當期繳費日起算三個月為寬限期間。",
+    article_no: "第13條",
+    tags: ["營運職", "問答題", "保險費", "寬限期間"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "簡易人壽保險法",
+    difficulty: 3,
+    question: "填充：簡易人壽保險契約停止效力後，要保人得於＿＿年以內申請恢復契約效力。",
+    answer: "二",
+    explanation: "簡易人壽保險法第14條規定，保險契約停效後，要保人得於二年以內申請復效。",
+    article_no: "第14條",
+    tags: ["營運職", "填充題", "復效"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "簡易人壽保險法",
+    difficulty: 3,
+    question: "問答：未滿十五歲被保險人於契約生效或復效後死亡時，三個月、六個月、九個月與給付比例有何關係？",
+    answer: "未滿三個月領受全部保險費；滿三個月未滿六個月四分之一；滿六個月未滿九個月半數；滿九個月全部保險金額",
+    explanation: "簡易人壽保險法第19條以三個月、六個月、九個月作為給付比例分界。",
+    article_no: "第19條",
+    tags: ["營運職", "問答題", "死亡給付", "比例"],
+  }),
+  textQuestion({
+    question_format: "fill_blank",
+    law_area: "郵政儲金匯兌法",
+    difficulty: 3,
+    question: "填充：存簿儲金每一人或每一團體僅得為＿＿戶。",
+    answer: "一",
+    explanation: "郵政儲金匯兌法第19條規定，存簿儲金每一人或每一團體僅得為一戶。",
+    article_no: "第19條",
+    tags: ["營運職", "填充題", "存簿儲金"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵政儲金匯兌法",
+    difficulty: 3,
+    question: "問答：中華郵政公司未依規定建立儲匯業務內部控制及稽核制度，依郵政儲金匯兌法可能受何種罰鍰？",
+    answer: "三十萬元以上一百五十萬元以下；內部控制；稽核制度",
+    explanation: "郵政儲金匯兌法第26條對未依規定建立內控及稽核制度等情形，處新臺幣三十萬元以上一百五十萬元以下罰鍰。",
+    article_no: "第26條",
+    tags: ["營運職", "問答題", "內控", "罰鍰"],
+  }),
+  textQuestion({
+    question_format: "short_answer",
+    law_area: "郵政儲金匯兌法",
+    difficulty: 3,
+    question: "問答：主管機關檢查時，中華郵政公司規避、妨礙或拒絕檢查，依郵政儲金匯兌法可能受何種罰鍰？",
+    answer: "五十萬元以上二百五十萬元以下；規避檢查；妨礙檢查；拒絕檢查",
+    explanation: "郵政儲金匯兌法第27條對規避、妨礙或拒絕檢查等情形，處新臺幣五十萬元以上二百五十萬元以下罰鍰。",
+    article_no: "第27條",
+    tags: ["營運職", "問答題", "檢查", "罰鍰"],
+  }),
+];
+
 export const seedPostalQuestions: PostalRuleQuestion[] = [
   choice({
     law_area: "郵政法",
@@ -1932,6 +2154,7 @@ export const seedPostalQuestions: PostalRuleQuestion[] = [
   ...approvedNumericQuestionsV3,
   ...approvedExactNumericQuestionsV4,
   ...approvedPastExamVariantQuestionsV5,
+  ...approvedOperationsWrittenQuestionsV6,
 ];
 
 export const postalSourcePacks: Record<PostalLawArea, string[]> = {
