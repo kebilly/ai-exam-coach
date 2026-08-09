@@ -148,6 +148,7 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
             {exam.items.map((item) => {
               const itemResult = result?.item_results.find((row) => row.item_no === item.item_no);
               const options = item.options;
+              const isChoiceQuestion = item.question_format === "single_choice" && Boolean(options);
               return (
                 <article className="rounded-md border border-slate-200 bg-white p-4" key={item.item_no}>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
@@ -162,7 +163,7 @@ function PostalRulesTool({ session }: { session: Parameters<typeof apiFetch>[0] 
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-7 text-slate-900">{item.question}</p>
 
-                  {options ? (
+                  {isChoiceQuestion && options ? (
                     <div className="mt-3 grid gap-2">
                       {(["A", "B", "C", "D"] as const).map((key) => (
                         <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm" key={key}>
