@@ -1,91 +1,95 @@
-# AI Exam Coach
+# AI Exam Coach｜郵局內升考試 AI 練習教練
 
-AI Exam Coach is a deployable exam-practice MVP for postal promotion exam preparation. It combines civil law essay grading, English full-exam practice, postal regulations practice, member access control, usage limits, learning records, and an admin dashboard.
+AI Exam Coach 是一個可部署的考試練習 MVP，聚焦於郵局內升考試準備情境，整合民法申論批改、英文完整考卷練習、郵政法規練習、會員啟用控管、每日使用額度、學習紀錄與管理後台。
 
-The project is designed as a portfolio-ready AI product prototype: it demonstrates how LLM workflows, structured scoring, database-backed access control, and cost protection can be integrated into a real learning scenario.
+本專案不是單純的 AI Demo，而是以「真實考生練習流程」為核心設計的 AI 產品原型。它展示如何把 LLM 工作流、結構化評分、資料庫權限控管、API 成本保護與後台管理整合成可實際使用的學習系統。
 
 - GitHub: [kebilly/ai-exam-coach](https://github.com/kebilly/ai-exam-coach)
 - Live Demo: [ai-exam-coach-beta.vercel.app](https://ai-exam-coach-beta.vercel.app/)
-- Status: deployable MVP / production prototype for controlled small-group testing
+- 專案狀態：可部署 MVP / Production Prototype，適合小規模封閉測試與作品集展示
 
-## Screenshots
+## 系統畫面
 
-### Platform Overview
+### 平台總覽
 
 ![Platform overview](docs/images/overview.png)
 
-### Civil Law Essay Grading Demo
+### 民法申論批改 Demo
 
 ![Civil law grading demo](docs/images/civil-law-grading-demo.png)
 
-### English Exam Practice Demo
+### 英文完整考卷 Demo
 
 ![English exam demo](docs/images/english-exam-demo.png)
 
-### Postal Regulations Practice Demo
+### 郵政法規練習 Demo
 
 ![Postal rules demo](docs/images/postal-rules-demo.png)
 
-### Member Login And Access Control
+### 會員登入與權限控管
 
 ![Login access control](docs/images/login-access-control.png)
 
-## Project Motivation
+## 專案動機
 
-The initial problem was not simply "generate questions with AI." The goal was to build a small but realistic learning product that can:
+這個專案要解決的問題不是「用 AI 產生題目」而已，而是建立一個能被考生真正拿來練習、並能被管理者控管成本與使用權限的 AI 學習產品。
 
-- help examinees practice repeatedly under limited time
-- identify weak points in civil law essay answers
-- provide English and postal regulations practice aligned with promotion exams
-- prevent uncontrolled API usage before members are approved
-- preserve learning records for later review
-- demonstrate AI strategy, product planning, system architecture, and implementation ability
+核心目標包括：
 
-## Core Features
+- 協助考生在有限時間內反覆練習
+- 針對民法申論答案提供具體批改與補強方向
+- 依照郵局內升考試情境提供英文與郵政法規練習
+- 避免未授權使用者呼叫正式 API，降低 token 成本風險
+- 保留學習紀錄，方便後續檢視練習成果
+- 展示 AI Strategy、產品規劃、系統架構與落地實作能力
 
-### Civil Law Essay Grading
+## 核心功能
 
-- Accepts civil law essay questions and student answers.
-- Supports random verified civil-law essay prompts with longer fact patterns.
-- Provides scores, issue analysis, legal authority feedback, reasoning feedback, conclusion feedback, strengths, weaknesses, and next-practice suggestions.
-- Supports OCR upload for handwritten answer recognition.
-- Uses structured grading JSON and a legacy adapter to keep frontend cards stable.
-- Includes anchor answers, diagnostics, score caps, and regression tests for grading stability.
+### 1. 民法申論 AI 批改
 
-### English Full-Exam Practice
+- 支援民法申論題與學生答案輸入
+- 支援經驗證的隨機民法申論題，題目敘述較完整，接近考試情境
+- 提供總分、爭點、法條、論證與結論等分數卡
+- 回饋包含優點、弱點、缺漏重點、修改建議與示範答題架構
+- 支援手寫答案 OCR 上傳辨識
+- 使用結構化 JSON 評分結果，並以 legacy adapter 維持前端顯示穩定
+- 建立 anchor answers、diagnostics、score caps 與 regression tests，降低評分漂移
 
-- Builds complete English practice papers instead of one-off short questions.
-- Includes vocabulary, grammar, cloze, reading, and translation-oriented practice depending on exam level.
-- Uses Chinese explanations so learners can review mistakes quickly.
-- For higher-level translation practice, uses paragraph-level prompts closer to historical exam difficulty while avoiding direct reuse of exam text.
+### 2. 英文完整考卷練習
 
-### Postal Regulations Practice
+- 產生完整英文考卷，而不是單題式短題目
+- 題型包含字彙、文法、克漏字、閱讀與翻譯導向練習
+- 依考試職階調整題型與難度
+- 提供中文解析，方便考生快速檢討
+- 翻譯題採段落型題目設計，難度更接近歷年考題，但避免直接複製考古題
 
-- Covers postal law, postal savings and remittances law, simple life insurance law, mail handling rules, and postal business regulations.
-- Supports different question modes by career level:
-  - Professional II to Professional I: mainly single-choice questions.
-  - Professional I to Operations: fill-in and short-answer style practice.
-- Uses source-aware seed questions and review statuses.
-- Records attempts and supports daily limits.
+### 3. 郵政法規練習
 
-### Member Access Control
+- 涵蓋郵政法、郵政儲金匯兌法、簡易人壽保險法、郵件處理規則與郵務營業規章
+- 依職階支援不同作答型態：
+  - 專業職二升專業職一：以選擇題為主
+  - 專業職一升營運職：填充與問答型練習
+- 建立來源導向的 seed 題庫與審核狀態
+- 保留作答紀錄並套用每日使用限制
 
-- Users register and log in through Supabase Auth.
-- Formal practice APIs require member or admin access.
-- Admins can activate/deactivate users.
-- Invite codes are hashed before storage.
-- Demo pages are designed to illustrate the workflow without exposing formal API usage.
+### 4. 會員啟用與使用限制
 
-### Admin Dashboard
+- 使用 Supabase Auth 進行註冊與登入
+- 正式練習 API 需要 member 或 admin 權限
+- 管理者可啟用或停用使用者
+- 邀請碼以 hash 形式儲存，避免明碼外洩
+- Demo 頁面以展示流程為主，避免未授權使用者消耗正式 API
 
-- View users, roles, plans, and usage state.
-- Activate or deactivate formal member access.
-- Promote or demote admin role.
-- Generate and disable invite codes.
-- Review civil law, English, postal regulations, and usage records by user.
-- Delete individual practice or usage records when needed.
+### 5. 管理後台
 
-## System Architecture
+- 查看使用者、角色、方案與啟用狀態
+- 啟用或停用正式會員權限
+- 升級或降級管理者角色
+- 產生與停用邀請碼
+- 依使用者檢視民法、英文、郵政法規與 AI 使用紀錄
+- 必要時刪除單筆練習或使用紀錄
+
+## 系統架構
 
 ```text
 Next.js App Router
@@ -127,54 +131,54 @@ OpenAI API
   |-- OCR support
 ```
 
-## Civil Law Grading Design
+## 民法評分設計
 
-The civil law grading module is located in:
+民法申論批改模組位於：
 
 ```text
 src/lib/civil-law-grading/
 ```
 
-Key files:
+主要檔案：
 
 ```text
-config.ts          grading dimensions, weights, score caps, and version settings
-schema.ts          structured JSON grading output schema
-service.ts         grading workflow, rubric selection, element evaluation, and scoring
-prompts.ts         prompt layers for civil-law grading
-anchors.ts         high/mid/low anchor answers
-legacy-adapter.ts  maps structured grading JSON to frontend score cards
+config.ts          評分維度、權重、score caps 與版本設定
+schema.ts          結構化 JSON 評分輸出 schema
+service.ts         評分流程、rubric 選擇、element evaluation 與分數計算
+prompts.ts         民法批改 prompt 分層
+anchors.ts         高分、中等、低分 anchor answers
+legacy-adapter.ts  將結構化評分結果轉成前端分數卡資料
 ```
 
-The grading design emphasizes:
+評分設計重點：
 
-- verified rubric selection before formal grading
-- element-level subsumption analysis
-- importance-weighted element scoring
-- programmatic score aggregation
-- score caps for major defects
-- deduction tracking with evidence
-- regression diagnostics for calibration
+- 正式評分前先選擇題目對應 rubric
+- 以 element-level subsumption 分析涵攝品質
+- ElementSpec importance 會影響涵攝主分
+- 總分由程式加總，不讓模型自行任意給分
+- 對重大缺陷使用 score cap 控制分數上限
+- 扣分原因綁定 evidence，提升可解釋性
+- 透過 regression diagnostics 維持評分穩定
 
-This prevents the model from freely inventing final scores and makes grading behavior easier to test, explain, and maintain.
+這樣的設計能避免模型只憑語感給分，也讓批改規則更容易測試、校準與維護。
 
-## Tech Stack
+## 技術棧
 
 - Framework: Next.js App Router
 - Language: TypeScript
 - UI: React, Tailwind CSS, lucide-react
 - Backend: Next.js API Routes
-- Auth / Database: Supabase Auth and PostgreSQL
+- Auth / Database: Supabase Auth, PostgreSQL
 - AI: OpenAI API
 - Validation: Zod
 - Deployment: Vercel
-- Testing / Diagnostics: custom TypeScript regression and diagnostic scripts
+- Testing / Diagnostics: TypeScript regression tests 與 diagnostic scripts
 
-## Security And API Key Management
+## 安全與 API Key 管理
 
-The project separates browser-safe configuration from server-only secrets.
+本專案將前端可公開設定與後端機密變數分離。
 
-Browser-safe variables:
+前端可公開變數：
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -182,7 +186,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 NEXT_PUBLIC_SITE_URL
 ```
 
-Server-only variables:
+後端專用機密變數：
 
 ```text
 SUPABASE_SERVICE_ROLE_KEY
@@ -190,16 +194,16 @@ OPENAI_API_KEY
 OPENAI_MODEL
 ```
 
-Formal APIs enforce:
+正式 API 具備以下保護：
 
-- valid Supabase session
-- member/admin access
-- daily usage limits
-- server-side OpenAI calls only
-- no client-side OpenAI key exposure
-- admin-only user management routes
+- 驗證 Supabase session
+- 檢查 member / admin 權限
+- 套用每日使用限制
+- OpenAI API 只在 server-side 呼叫
+- 前端不暴露 OpenAI API Key
+- 管理功能僅限 admin 路由使用
 
-Sensitive local files are ignored by Git:
+以下敏感或本機產物不應進入 Git：
 
 ```text
 .env
@@ -212,22 +216,22 @@ tmp
 .vercel
 ```
 
-Additional GitHub safety notes are documented in:
+GitHub 安全檢查筆記：
 
 ```text
 docs/github-security-check-notes.md
 ```
 
-## Database
+## 資料庫設計
 
-Database schema and security hardening SQL are in:
+資料庫 schema 與安全設定位於：
 
 ```text
 supabase/schema.sql
 supabase/security-hardening.sql
 ```
 
-Main tables include:
+主要資料表：
 
 ```text
 user_profiles
@@ -239,20 +243,20 @@ usage_logs
 member_invite_codes
 ```
 
-The database supports:
+資料庫支援：
 
-- user profile and role/plan control
-- practice history
-- usage tracking
-- hashed invite codes
-- RLS-based user isolation
-- admin-only server-side management
+- 使用者 profile、role 與 plan 控制
+- 練習紀錄保存
+- 使用量紀錄
+- 邀請碼 hash 儲存
+- RLS 使用者資料隔離
+- admin server-side 管理操作
 
-## Environment Variables
+## 環境變數
 
-Create `.env.local` from `.env.example`.
+請依 `.env.example` 建立 `.env.local`。
 
-Required local variables:
+本機必要變數：
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
@@ -269,30 +273,29 @@ UNLOCK_ATTEMPT_DAILY_LIMIT=10
 DEMO_API_ENABLED=false
 ```
 
-For Vercel, set the same variables in Project Settings > Environment Variables. Do not commit `.env.local`.
+Vercel 部署時，請在 Project Settings > Environment Variables 中設定相同變數。不要提交 `.env.local`。
 
-## Local Development
+## 本機啟動
 
-Install dependencies:
+安裝依賴：
 
 ```cmd
 npm install
 ```
 
-Run locally on port 4000:
+啟動開發伺服器：
 
 ```cmd
-cd /d C:\Projects\LAW_KK
 npm run dev -- -p 4000
 ```
 
-Local URL:
+本機網址：
 
 ```text
 http://localhost:4000
 ```
 
-Useful pages:
+常用頁面：
 
 ```text
 http://localhost:4000/
@@ -303,43 +306,43 @@ http://localhost:4000/dashboard
 http://localhost:4000/admin
 ```
 
-## Verification
+## 驗證與測試
 
-Run TypeScript check:
+TypeScript 檢查：
 
 ```cmd
 npx tsc --noEmit --incremental false
 ```
 
-Run civil law regression tests:
+民法 regression tests：
 
 ```cmd
 npm run test:civil-law
 ```
 
-Run civil law diagnostic report:
+民法 diagnostic report：
 
 ```cmd
 npm run diagnose:civil-law
 ```
 
-Run production build:
+Production build：
 
 ```cmd
 npm run build
 ```
 
-Avoid running `npm run build` while `npm run dev` is active, because both may write to `.next`.
+建議不要在 `npm run dev` 執行中同時執行 `npm run build`，避免 `.next` 快取或鎖檔造成錯誤。
 
-## Deployment
+## 部署流程
 
-Current deployment target:
+目前部署平台：
 
 ```text
 Vercel
 ```
 
-Typical deployment flow:
+典型流程：
 
 ```cmd
 git status
@@ -348,36 +351,38 @@ git commit -m "Update feature"
 git push
 ```
 
-Vercel redeploys automatically when the connected GitHub `main` branch receives a new commit. If only environment variables are changed in Vercel, manually trigger Redeploy.
+當 GitHub `main` branch 更新後，Vercel 會自動重新部署。若只修改 Vercel 環境變數，需手動 Redeploy。
 
-## Resume Screenshot Candidates
+## 履歷與作品集展示重點
 
-Recommended screenshots for resume or portfolio use:
+推薦放入履歷或作品集的畫面：
 
-1. `docs/images/overview.png` - Best for showing the complete product positioning: three practice modules, member access control, and daily usage limits.
+1. `docs/images/overview.png`
+   展示完整產品定位：三大練習模組、會員啟用與每日使用限制。
 
-2. `docs/images/civil-law-grading-demo.png` - Best for showing the AI grading value: score cards, issue/legal/reasoning feedback, strengths, and improvement suggestions.
+2. `docs/images/civil-law-grading-demo.png`
+   展示 AI 批改核心價值：分數卡、爭點、法條、論證、優點與改善建議。
 
-3. `docs/images/postal-rules-demo.png` - Best for showing exam-specific expansion beyond LLM chat: source-aware postal regulations practice with answer/explanation flow.
+3. `docs/images/postal-rules-demo.png`
+   展示不只是聊天機器人，而是能擴充到考試科目的練習系統。
 
-## Portfolio Highlights
+## 專案亮點
 
-This project demonstrates:
+本專案展示：
 
-- AI product planning for a real learning workflow
-- LLM workflow design beyond a generic chatbot
-- legal-domain rubric design and grading calibration
-- prompt/schema/scoring separation
-- member access control and API cost protection
-- Supabase Auth and PostgreSQL integration
-- admin operations and usage visibility
-- regression testing for grading stability
-- deployable Next.js/Vercel architecture
+- 從真實考試痛點出發的 AI 產品規劃
+- 不只是 chatbot 的 LLM workflow 設計
+- 民法申論 rubric、評分校準與 regression protection
+- prompt、schema、scoring、adapter 分層設計
+- 會員啟用、API 成本控管與每日額度限制
+- Supabase Auth、PostgreSQL 與 RLS 整合
+- 管理後台與使用紀錄可視化
+- 可部署的 Next.js / Vercel 架構
+- 以 MVP 方式快速落地並持續校準品質
 
-## Limitations And Disclaimer
+## 限制與聲明
 
-- Civil law grading is for exam practice and learning feedback only.
-- The system does not provide legal advice.
-- Postal regulations questions should be reviewed against the latest official rules before high-stakes use.
-- The MVP is optimized for controlled small-group testing, not unlimited public traffic.
-- Current civil law grading quality depends on verified rubric coverage; unsupported question types may be rejected or require new rubric calibration.
+- 民法批改僅供考試練習與學習回饋使用，不構成法律意見。
+- 郵政法規題目在正式高風險使用前，仍應依最新官方法規與考試公告人工確認。
+- 本版本以小規模封閉測試與作品集展示為主要目標，不適合未限制流量的公開大量使用。
+- 民法批改品質取決於已驗證 rubric 覆蓋範圍；未支援題型可能需要新增 rubric 或人工校準。
