@@ -1,78 +1,121 @@
 # AI Exam Coach
 
-AI Exam Coach is an internal exam-practice platform designed for postal promotion exam preparation. It combines civil law essay grading, English practice generation, member access control, usage limits, learning records, and an admin dashboard into a deployable MVP.
+AI Exam Coach is a deployable exam-practice MVP for postal promotion exam preparation. It combines civil law essay grading, English full-exam practice, postal regulations practice, member access control, usage limits, learning records, and an admin dashboard.
 
-The project focuses on showing how LLM applications can be turned into a controlled learning product rather than a simple chatbot demo.
+The project is designed as a portfolio-ready AI product prototype: it demonstrates how LLM workflows, structured scoring, database-backed access control, and cost protection can be integrated into a real learning scenario.
 
-## Project Goals
+- GitHub: [kebilly/ai-exam-coach](https://github.com/kebilly/ai-exam-coach)
+- Live Demo: [ai-exam-coach-beta.vercel.app](https://ai-exam-coach-beta.vercel.app/)
+- Status: deployable MVP / production prototype for controlled small-group testing
 
-- Help learners practice civil law essay answers with structured grading feedback.
-- Generate English practice questions aligned with internal exam preparation needs.
-- Preserve learning records for review and follow-up practice.
-- Restrict formal usage to approved members through admin activation or invite codes.
-- Prevent uncontrolled API usage through server-side authorization and daily limits.
-- Provide a portfolio-ready example of AI product planning, LLM workflow design, backend access control, and deployment readiness.
+## Screenshots
+
+### Platform Overview
+
+![Platform overview](docs/images/overview.png)
+
+### Civil Law Essay Grading Demo
+
+![Civil law grading demo](docs/images/civil-law-grading-demo.png)
+
+### English Exam Practice Demo
+
+![English exam demo](docs/images/english-exam-demo.png)
+
+### Postal Regulations Practice Demo
+
+![Postal rules demo](docs/images/postal-rules-demo.png)
+
+### Member Login And Access Control
+
+![Login access control](docs/images/login-access-control.png)
+
+## Project Motivation
+
+The initial problem was not simply "generate questions with AI." The goal was to build a small but realistic learning product that can:
+
+- help examinees practice repeatedly under limited time
+- identify weak points in civil law essay answers
+- provide English and postal regulations practice aligned with promotion exams
+- prevent uncontrolled API usage before members are approved
+- preserve learning records for later review
+- demonstrate AI strategy, product planning, system architecture, and implementation ability
 
 ## Core Features
 
 ### Civil Law Essay Grading
 
-- Supports civil law essay answer submission.
-- Grades by structured dimensions such as issue spotting, legal authority, reasoning, subsumption, consistency, and conclusion.
-- Uses a configurable civil-law grading standard.
-- Separates scoring, feedback, schema validation, and legacy frontend adaptation.
-- Includes regression tests and diagnostic scripts for grading calibration.
+- Accepts civil law essay questions and student answers.
+- Supports random verified civil-law essay prompts with longer fact patterns.
+- Provides scores, issue analysis, legal authority feedback, reasoning feedback, conclusion feedback, strengths, weaknesses, and next-practice suggestions.
 - Supports OCR upload for handwritten answer recognition.
+- Uses structured grading JSON and a legacy adapter to keep frontend cards stable.
+- Includes anchor answers, diagnostics, score caps, and regression tests for grading stability.
 
-### English Practice
+### English Full-Exam Practice
 
-- Generates English practice questions with Chinese explanations.
-- Uses seed question-bank patterns to avoid overly long or expensive generation.
-- Supports formal member-only usage with daily limits.
-- Records user attempts and correctness.
+- Builds complete English practice papers instead of one-off short questions.
+- Includes vocabulary, grammar, cloze, reading, and translation-oriented practice depending on exam level.
+- Uses Chinese explanations so learners can review mistakes quickly.
+- For higher-level translation practice, uses paragraph-level prompts closer to historical exam difficulty while avoiding direct reuse of exam text.
+
+### Postal Regulations Practice
+
+- Covers postal law, postal savings and remittances law, simple life insurance law, mail handling rules, and postal business regulations.
+- Supports different question modes by career level:
+  - Professional II to Professional I: mainly single-choice questions.
+  - Professional I to Operations: fill-in and short-answer style practice.
+- Uses source-aware seed questions and review statuses.
+- Records attempts and supports daily limits.
 
 ### Member Access Control
 
-- Users can register and log in through Supabase Auth.
-- Formal practice APIs require approved member or admin status.
-- Admin can activate/deactivate users.
-- Admin can generate one-time invite codes.
-- Invite codes are stored as hashes, not plaintext.
-- Unapproved users cannot call formal OpenAI-backed APIs.
+- Users register and log in through Supabase Auth.
+- Formal practice APIs require member or admin access.
+- Admins can activate/deactivate users.
+- Invite codes are hashed before storage.
+- Demo pages are designed to illustrate the workflow without exposing formal API usage.
 
 ### Admin Dashboard
 
-- View users, roles, plans, and usage summaries.
-- Activate or deactivate formal access.
+- View users, roles, plans, and usage state.
+- Activate or deactivate formal member access.
 - Promote or demote admin role.
 - Generate and disable invite codes.
-- View civil law, English, and AI usage records by user.
-- Filter records by user.
+- Review civil law, English, postal regulations, and usage records by user.
 - Delete individual practice or usage records when needed.
 
-## Architecture Overview
+## System Architecture
 
 ```text
 Next.js App Router
   |
-  |-- Client Pages
-  |     |-- Home
-  |     |-- Login / Register
+  |-- Public Demo Pages
+  |     |-- Civil Law Demo
+  |     |-- English Demo
+  |     |-- Postal Regulations Demo
+  |
+  |-- Member Pages
   |     |-- Dashboard
   |     |-- Civil Law Practice
-  |     |-- English Practice
+  |     |-- English Exam Practice
+  |     |-- Postal Regulations Practice
   |     |-- History
-  |     |-- Admin
+  |
+  |-- Admin Pages
+  |     |-- User Management
+  |     |-- Invite Codes
+  |     |-- Practice Records
   |
   |-- API Routes
         |-- /api/law/grade
         |-- /api/law/ocr
         |-- /api/english/generate
         |-- /api/english/submit
+        |-- /api/postal-rules/start
+        |-- /api/postal-rules/submit
         |-- /api/profile/unlock
         |-- /api/admin/*
-        |
-        |-- Auth / Usage / OpenAI / Supabase services
 
 Supabase
   |-- Auth
@@ -82,7 +125,6 @@ Supabase
 OpenAI API
   |-- Civil law grading
   |-- OCR support
-  |-- English question generation
 ```
 
 ## Civil Law Grading Design
@@ -96,31 +138,43 @@ src/lib/civil-law-grading/
 Key files:
 
 ```text
-config.ts          grading dimensions, weights, caps, and version settings
+config.ts          grading dimensions, weights, score caps, and version settings
 schema.ts          structured JSON grading output schema
-service.ts         grading workflow and scoring engine
-prompts.ts         LLM prompt layers
+service.ts         grading workflow, rubric selection, element evaluation, and scoring
+prompts.ts         prompt layers for civil-law grading
 anchors.ts         high/mid/low anchor answers
-legacy-adapter.ts  maps structured grading JSON to existing frontend cards
+legacy-adapter.ts  maps structured grading JSON to frontend score cards
 ```
 
-The scoring flow emphasizes:
+The grading design emphasizes:
 
-- question-specific rubric selection
-- element-level subsumption evaluation
+- verified rubric selection before formal grading
+- element-level subsumption analysis
 - importance-weighted element scoring
-- programmatic total score calculation
+- programmatic score aggregation
 - score caps for major defects
-- deduction tracking
-- regression diagnostics
+- deduction tracking with evidence
+- regression diagnostics for calibration
 
-This design prevents the model from freely inventing final scores and makes grading behavior easier to test and calibrate.
+This prevents the model from freely inventing final scores and makes grading behavior easier to test, explain, and maintain.
 
-## Security and Access Control
+## Tech Stack
+
+- Framework: Next.js App Router
+- Language: TypeScript
+- UI: React, Tailwind CSS, lucide-react
+- Backend: Next.js API Routes
+- Auth / Database: Supabase Auth and PostgreSQL
+- AI: OpenAI API
+- Validation: Zod
+- Deployment: Vercel
+- Testing / Diagnostics: custom TypeScript regression and diagnostic scripts
+
+## Security And API Key Management
 
 The project separates browser-safe configuration from server-only secrets.
 
-Public browser variables:
+Browser-safe variables:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL
@@ -138,21 +192,24 @@ OPENAI_MODEL
 
 Formal APIs enforce:
 
-- valid logged-in Supabase session
+- valid Supabase session
 - member/admin access
 - daily usage limits
-- server-side API calls only
+- server-side OpenAI calls only
 - no client-side OpenAI key exposure
+- admin-only user management routes
 
-Sensitive files are ignored by Git:
+Sensitive local files are ignored by Git:
 
 ```text
-.env.local
 .env
+.env.local
 .next
 node_modules
 backups
 output
+tmp
+.vercel
 ```
 
 Additional GitHub safety notes are documented in:
@@ -163,19 +220,21 @@ docs/github-security-check-notes.md
 
 ## Database
 
-Database schema and hardening SQL are in:
+Database schema and security hardening SQL are in:
 
 ```text
 supabase/schema.sql
 supabase/security-hardening.sql
 ```
 
-Main tables:
+Main tables include:
 
 ```text
 user_profiles
 law_submissions
 english_exercises
+postal_rule_attempts
+postal_rule_questions
 usage_logs
 member_invite_codes
 ```
@@ -184,7 +243,7 @@ The database supports:
 
 - user profile and role/plan control
 - practice history
-- usage logs
+- usage tracking
 - hashed invite codes
 - RLS-based user isolation
 - admin-only server-side management
@@ -200,17 +259,17 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4o-mini
 NEXT_PUBLIC_SITE_URL=http://localhost:4000
 DAILY_USAGE_LIMIT=10
 LAW_DAILY_LIMIT=2
 LAW_OCR_DAILY_LIMIT=3
-ENGLISH_DAILY_LIMIT=1
+ENGLISH_DAILY_LIMIT=2
+POSTAL_RULES_DAILY_LIMIT=2
 UNLOCK_ATTEMPT_DAILY_LIMIT=10
 DEMO_API_ENABLED=false
 ```
 
-For Vercel, set the same variables in Project Settings > Environment Variables.
+For Vercel, set the same variables in Project Settings > Environment Variables. Do not commit `.env.local`.
 
 ## Local Development
 
@@ -224,11 +283,8 @@ Run locally on port 4000:
 
 ```cmd
 cd /d C:\Projects\LAW_KK
-set NODE_OPTIONS=--use-system-ca
 npm run dev -- -p 4000
 ```
-
-`NODE_OPTIONS=--use-system-ca` is useful on Windows when local antivirus or certificate inspection causes Node.js to reject Supabase HTTPS certificates.
 
 Local URL:
 
@@ -236,11 +292,13 @@ Local URL:
 http://localhost:4000
 ```
 
-Main test pages:
+Useful pages:
 
 ```text
+http://localhost:4000/
 http://localhost:4000/demo/law
 http://localhost:4000/demo/english
+http://localhost:4000/demo/postal-rules
 http://localhost:4000/dashboard
 http://localhost:4000/admin
 ```
@@ -271,7 +329,7 @@ Run production build:
 npm run build
 ```
 
-Avoid running `npm run build` while `npm run dev` is still active, because both may write to `.next`.
+Avoid running `npm run build` while `npm run dev` is active, because both may write to `.next`.
 
 ## Deployment
 
@@ -290,33 +348,36 @@ git commit -m "Update feature"
 git push
 ```
 
-Vercel redeploys automatically when the connected GitHub `main` branch receives a new commit.
+Vercel redeploys automatically when the connected GitHub `main` branch receives a new commit. If only environment variables are changed in Vercel, manually trigger Redeploy.
 
-If only environment variables are changed in Vercel, manually trigger Redeploy.
+## Resume Screenshot Candidates
+
+Recommended screenshots for resume or portfolio use:
+
+1. `docs/images/overview.png` - Best for showing the complete product positioning: three practice modules, member access control, and daily usage limits.
+
+2. `docs/images/civil-law-grading-demo.png` - Best for showing the AI grading value: score cards, issue/legal/reasoning feedback, strengths, and improvement suggestions.
+
+3. `docs/images/postal-rules-demo.png` - Best for showing exam-specific expansion beyond LLM chat: source-aware postal regulations practice with answer/explanation flow.
 
 ## Portfolio Highlights
 
 This project demonstrates:
 
 - AI product planning for a real learning workflow
-- LLM workflow design beyond a basic chat interface
-- structured scoring and feedback generation
-- legal-domain rubric calibration
-- prompt/schema separation
+- LLM workflow design beyond a generic chatbot
+- legal-domain rubric design and grading calibration
+- prompt/schema/scoring separation
 - member access control and API cost protection
 - Supabase Auth and PostgreSQL integration
 - admin operations and usage visibility
 - regression testing for grading stability
-- deployment readiness with GitHub and Vercel
+- deployable Next.js/Vercel architecture
 
-## Current Status
+## Limitations And Disclaimer
 
-This is a deployable MVP / production prototype for controlled internal testing.
-
-Current focus:
-
-- stabilize the four core civil law grading patterns
-- verify generated English questions with historical exam materials
-- keep formal usage limited to approved users
-- collect feedback from a small group of testers
-- improve grading quality through regression cases rather than broad rewrites
+- Civil law grading is for exam practice and learning feedback only.
+- The system does not provide legal advice.
+- Postal regulations questions should be reviewed against the latest official rules before high-stakes use.
+- The MVP is optimized for controlled small-group testing, not unlimited public traffic.
+- Current civil law grading quality depends on verified rubric coverage; unsupported question types may be rejected or require new rubric calibration.
